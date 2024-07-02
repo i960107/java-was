@@ -91,6 +91,7 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
         public void run() {
             while (running) {
                 try {
+                    log.info("acceptor accepts connection and delegating it to worker thread");
                     Socket socket = serverSocket.accept();
                     SocketProcessor worker = createWorker(socket);
                     workerExecutorService.execute(worker);
@@ -114,8 +115,6 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
         public void run() {
             HttpProcessor processor = getProcessor();
             try {
-                log.info("httpProcessor start socket processing in thread({}) ",
-                        Thread.currentThread().getName());
                 processor.process(socket);
             } catch (IOException exception) {
                 log.warn("fail while processing socket");
