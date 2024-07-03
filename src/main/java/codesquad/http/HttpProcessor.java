@@ -21,7 +21,7 @@ public class HttpProcessor {
 
     private static final String STATIC_FOLDER = "static";
 
-    private static final String DEFAULT_PATH = "/";
+    private static final String INDEX_PAGE = "/index.html";
 
     public void process(Socket socket) throws IOException {
         try (
@@ -80,6 +80,9 @@ public class HttpProcessor {
         File file = new File(resource.getFile());
         if (!file.exists()) {
             return Optional.empty();
+        }
+        if (file.isDirectory()) {
+            file = new File(file, INDEX_PAGE);
         }
         return file.exists() ? Optional.of(file) : Optional.empty();
     }
