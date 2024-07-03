@@ -14,9 +14,7 @@ public class HttpRequestParser {
 
     private static final String HOST_HEADER = "Host";
 
-    public static Request parse(InputStream inputStream) throws IOException {
-        BufferedInputStream input = new BufferedInputStream(inputStream);
-
+    public static Request parse(InputStream input) throws IOException {
         String requestLine = parseRequestLine(input);
         String[] requestLineParts = splitRequestLine(requestLine);
         String method = requestLineParts[0];
@@ -49,7 +47,7 @@ public class HttpRequestParser {
         );
     }
 
-    private static String parseRequestLine(BufferedInputStream input) throws IOException {
+    private static String parseRequestLine(InputStream input) throws IOException {
         String requestLine = readLine(input);
         if (requestLine == null || requestLine.isEmpty()) {
             throw new IOException("empty request line");
@@ -78,16 +76,16 @@ public class HttpRequestParser {
         return headers;
     }
 
-    private static Map<String, String> parseParameters(BufferedInputStream input) throws IOException {
+    private static Map<String, String> parseParameters(InputStream input) throws IOException {
         //todo parameter 있는 경우 parameter로 파싱 필요
         Map<String, String> parameters = new HashMap<>();
         return parameters;
     }
 
-    private static byte[] parseBody(BufferedInputStream input, int contentLength) throws IOException {
+    private static byte[] parseBody(InputStream input, int contentLength) throws IOException {
         byte[] body = new byte[contentLength];
         int read = input.read(body, 0, contentLength);
-        if (read != contentLength) {
+        if (read != contentLength || input.available() > 0) {
             throw new IOException("incomplete body read");
         }
         return body;

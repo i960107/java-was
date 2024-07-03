@@ -15,7 +15,7 @@ public class HttpResponseWriter {
 
     public static final String CONTENT_TYPE_HEADER = "Content-Type";
 
-    public static final int BUFFER_SIZE = 4096;
+    public static final int BUFFER_SIZE = 8192;
 
     public static void write(OutputStream output, Response<?> response) throws IOException {
 
@@ -37,7 +37,7 @@ public class HttpResponseWriter {
         ) {
             File file = (File) response.getBody();
             try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))) {
-                byte[] buffer = new byte[BUFFER_SIZE]; // 4KB 버퍼 크기 사용
+                byte[] buffer = new byte[BUFFER_SIZE];
                 int bytesRead;
                 while ((bytesRead = bis.read(buffer)) != -1) {
                     output.write(buffer, 0, bytesRead);
