@@ -10,10 +10,6 @@ import java.util.Map;
 
 public class HttpRequestParser {
 
-    private static final String CONTENT_LENGTH_HEADER = "Content-Length";
-
-    private static final String HOST_HEADER = "Host";
-
     public static Request parse(InputStream input) throws IOException {
         String requestLine = parseRequestLine(input);
         String[] requestLineParts = splitRequestLine(requestLine);
@@ -21,18 +17,19 @@ public class HttpRequestParser {
         String path = requestLineParts[1];
         String protocol = requestLineParts[2];
 
-        Map<String, String> headers = parseHeaders(input);
-        if (!headers.containsKey(HOST_HEADER)) {
+        HttpHeader header = parseHeaders(input);
+        if (!header.containsKey(HttpHeader.HOST_HEADER)) {
             throw new IOException("host header not exist");
         }
 
-        String host = headers.get(HOST_HEADER);
+        String host = header.getHeader(HttpHeader.HOST_HEADER)
+                .orElseThrow(() -> new IOException("host header not exist"));
 
         Map<String, String> parameters = parseParameters(input);
 
         byte[] body = null;
-        if (headers.containsKey(CONTENT_LENGTH_HEADER)) {
-            int contentLength = Integer.parseInt(headers.get(CONTENT_LENGTH_HEADER));
+        if (header.containsKey(HttpHeader.CONTENT_LENGTH_HEADER)) {
+            int contentLength = Integer.parseInt(header.getHeader(HttpHeader.CONTENT_LENGTH_HEADER).get());
             body = parseBody(input, contentLength);
         }
 
@@ -41,7 +38,7 @@ public class HttpRequestParser {
                 path,
                 protocol,
                 host,
-                headers,
+                header,
                 parameters,
                 body
         );
@@ -63,7 +60,7 @@ public class HttpRequestParser {
         return parts;
     }
 
-    private static Map<String, String> parseHeaders(BufferedInputStream input) throws IOException {
+    private static HttpHeader parseHeaders(InputStream input) throws IOException {
         Map<String, String> headers = new HashMap<>();
         String headerLine;
         while (!(headerLine = readLine(input)).isEmpty()) {
@@ -73,7 +70,7 @@ public class HttpRequestParser {
             }
             headers.put(headerParts[0], headerParts[1]);
         }
-        return headers;
+        return new HttpHeader(headers);
     }
 
     private static Map<String, String> parseParameters(InputStream input) throws IOException {

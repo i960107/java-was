@@ -11,10 +11,6 @@ import java.util.Map;
 
 public class HttpResponseWriter {
 
-    public static final String CONTENT_LENGTH_HEADER = "Content-Length";
-
-    public static final String CONTENT_TYPE_HEADER = "Content-Type";
-
     public static final int BUFFER_SIZE = 8192;
 
     public static void write(OutputStream output, Response<?> response) throws IOException {
@@ -31,7 +27,7 @@ public class HttpResponseWriter {
 
         writeLine(output, null);
 
-        if (response.getHeader(CONTENT_LENGTH_HEADER).isPresent()
+        if (response.getHeader(HttpHeader.CONTENT_LENGTH_HEADER).isPresent()
                 && response.getBody() != null
                 && response.getBody().getClass().equals(File.class)
         ) {

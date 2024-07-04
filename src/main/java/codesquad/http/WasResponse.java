@@ -8,18 +8,18 @@ import java.util.Optional;
 public class WasResponse<T> implements Response<T> {
     private final String protocol;
     private final HttpSCStatus status;
-    private final Map<String, String> headers;
+    private final HttpHeader header;
     private final T body;
 
-    public WasResponse(String protocol, HttpSCStatus status, Map<String, String> headers, T body) {
+    public WasResponse(String protocol, HttpSCStatus status, HttpHeader header, T body) {
         this.protocol = protocol;
         this.status = status;
-        this.headers = headers;
+        this.header = header;
         this.body = body;
     }
 
-    public static WasResponse<Void> fail(String protocol, HttpSCStatus status, Map<String, String> headers) {
-        return new WasResponse<>(protocol, status, headers, null);
+    public static WasResponse<Void> fail(String protocol, HttpSCStatus status, HttpHeader header) {
+        return new WasResponse<>(protocol, status, header, null);
     }
 
     @Override
@@ -39,12 +39,12 @@ public class WasResponse<T> implements Response<T> {
 
     @Override
     public Map<String, String> getHeaders() {
-        return Collections.unmodifiableMap(headers);
+        return header.getHeaders();
     }
 
     @Override
     public Optional<String> getHeader(String key) {
-        return Optional.ofNullable(headers.get(key));
+        return header.getHeader(key);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class WasResponse<T> implements Response<T> {
         sb.append("protocol='").append(protocol).append('\'').append(System.lineSeparator());
         sb.append("statusCode='").append(getStatusCode()).append('\'').append(System.lineSeparator());
         sb.append("statusMeessage='").append(getStatusMessage()).append('\'').append(System.lineSeparator());
-        sb.append("headers=").append(headers).append(System.lineSeparator());
+        sb.append("headers=").append(header.getHeaders()).append(System.lineSeparator());
         sb.append("body=").append(body).append(System.lineSeparator());
         sb.append("}").append(System.lineSeparator());
         return sb.toString();

@@ -15,7 +15,7 @@ public class WasRequest implements Request {
 
     private String host;
 
-    private Map<String, String> headers;
+    private HttpHeader headers;
 
     private Map<String, String> parameters;
 
@@ -25,7 +25,7 @@ public class WasRequest implements Request {
                       String path,
                       String protocol,
                       String host,
-                      Map<String, String> headers,
+                      HttpHeader headers,
                       Map<String, String> parameters,
                       byte[] body) {
         this.method = method;
@@ -39,12 +39,12 @@ public class WasRequest implements Request {
 
     @Override
     public Map<String, String> getHeaders() {
-        return Collections.unmodifiableMap(headers);
+        return headers.getHeaders();
     }
 
     @Override
     public Optional<String> getHeader(String name) {
-        return Optional.of(headers.get(name));
+        return headers.getHeader(name);
     }
 
     @Override

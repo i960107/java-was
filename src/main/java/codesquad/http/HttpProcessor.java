@@ -2,6 +2,7 @@ package codesquad.http;
 
 import codesquad.HttpSCStatus;
 import codesquad.IOUtil;
+import codesquad.MimeTypes;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -10,8 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,9 +21,7 @@ public class HttpProcessor {
 
     private static final String STATIC_FOLDER = "static";
 
-    private static final String DEFAULT_PATH = "/";
-
-    private static final String DEFAULT_PAGE = "/main/index.html";
+    private static final String INDEX_PAGE = "/index.html";
 
     public void process(Socket socket) throws IOException {
         try (
@@ -31,8 +29,7 @@ public class HttpProcessor {
                 BufferedOutputStream outputStream = new BufferedOutputStream(socket.getOutputStream());
         ) {
             Request request = processRequest(inputStream);
-            String fileName = request.getPath().equals(DEFAULT_PATH) ? DEFAULT_PAGE : request.getPath();
-            processResponse(outputStream, request, fileName);
+            processResponse(outputStream, request, request.getPath());
         }
     }
 
@@ -42,37 +39,52 @@ public class HttpProcessor {
         return request;
     }
 
-    public void processResponse(OutputStream outputStream, Request request, String fileName) throws IOException {
+    public void processResponse(OutputStream outputStream, Request request, String path) throws IOException {
         Response<?> response = null;
 
-        HashMap<String, String> headers = new HashMap<>();
-        addCommonHeader(headers);
+        HttpHeader header = new HttpHeader();
+        addCommonHeader(header);
 
-        URL resource = getClass().getClassLoader().getResource(STATIC_FOLDER + fileName);
+        Optional<File> file = getFile(path);
 
-        if (resource != null) {
-            File file = new File(resource.getFile());
-            if (file.exists() && file.isFile()) {
-                headers.put(HttpResponseWriter.CONTENT_LENGTH_HEADER, String.valueOf(file.length()));
-                response = new WasResponse<File>(
-                        request.getProtocol(),
-                        HttpSCStatus.OK,
-                        headers,
-                        file
-                );
-            }
+        if (file.isEmpty()) {
+            response = WasResponse.fail(request.getProtocol(), HttpSCStatus.NOT_FOUND, header);
+        } else {
+            File fileToResponse = file.get();
+            header.setHeader(HttpHeader.CONTENT_LENGTH_HEADER, String.valueOf(fileToResponse.length()));
+            header.setHeader(HttpHeader.CONTENT_TYPE_HEADER, MimeTypes.getMimeType(fileToResponse.getName()));
+            response = new WasResponse<File>(
+                    request.getProtocol(),
+                    HttpSCStatus.OK,
+                    header,
+                    fileToResponse
+            );
         }
 
-        if (response == null) {
-            response = WasResponse.fail(request.getProtocol(), HttpSCStatus.NOT_FOUND, headers);
-        }
         log.info(response.toString());
         HttpResponseWriter.write(outputStream, response);
     }
 
-    private void addCommonHeader(Map<String, String> headers) {
-        headers.put("Date", IOUtil.getDateStringUtc());
-        headers.put("Connection", "close");
+    private void addCommonHeader(HttpHeader headers) {
+        headers.setHeader(HttpHeader.DATE_HEADER, IOUtil.getDateStringUtc());
+        headers.setHeader(HttpHeader.CONNECTION_HEADER, "close");
+    }
+
+    private Optional<File> getFile(String path) {
+        URL resource = getClass().getClassLoader().getResource(STATIC_FOLDER + path);
+
+        if (resource == null) {
+            return Optional.empty();
+        }
+
+        File file = new File(resource.getFile());
+        if (!file.exists()) {
+            return Optional.empty();
+        }
+        if (file.isDirectory()) {
+            file = new File(file, INDEX_PAGE);
+        }
+        return file.exists() ? Optional.of(file) : Optional.empty();
     }
 
 }

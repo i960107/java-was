@@ -4,6 +4,7 @@ import codesquad.http.JIoEndpoint.SocketProcessor;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -19,7 +20,7 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
 
     private final ExecutorService workerExecutorService;
 
-    private final LinkedBlockingQueue<HttpProcessor> processors;
+    private final ArrayBlockingQueue<HttpProcessor> processors;
 
     private final int port;
 
@@ -38,7 +39,7 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
         log.info("acceptor thread created");
         log.info("{} worker threads created", workers);
 
-        this.processors = new LinkedBlockingQueue<>(workers);
+        this.processors = new ArrayBlockingQueue<>(workers);
     }
 
     @Override
