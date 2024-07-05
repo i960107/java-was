@@ -1,8 +1,8 @@
 package codesquad.server;
 
 import codesquad.http.WasRequest;
+import codesquad.server.exception.NoMatchHandlerException;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 public class HandlerContext {
@@ -27,9 +27,10 @@ public class HandlerContext {
     }
 
 
-    public Optional<Handler> getMappedHandler(WasRequest request) {
+    public Handler getMappedHandler(WasRequest request) {
         return handlers.stream()
                 .filter(handler -> handler.canHandle(request))
-                .findFirst();
+                .findFirst()
+                .orElseThrow(() -> new NoMatchHandlerException());
     }
 }

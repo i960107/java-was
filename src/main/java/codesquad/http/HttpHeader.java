@@ -24,10 +24,10 @@ public class HttpHeader {
     }
 
     public static HttpHeader from(String headerLine) {
-        String[] split = headerLine.split(KEY_VALUE_DELIMITER);
-
-        String key = split[0];
-        String[] valuesToken = split[1].strip().split(VALUES_DELIMITER);
+        String key = headerLine.substring(0, headerLine.indexOf(KEY_VALUE_DELIMITER));
+        String[] valuesToken = headerLine
+                .substring(headerLine.indexOf(KEY_VALUE_DELIMITER) + 1).strip()
+                .split(VALUES_DELIMITER);
 
         Set<String> values = new HashSet<>();
         for (String value : valuesToken) {

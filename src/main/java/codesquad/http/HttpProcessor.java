@@ -1,17 +1,15 @@
 package codesquad.http;
 
+import codesquad.http.exception.HttpProtocolException;
 import codesquad.server.Handler;
 import codesquad.server.HandlerContext;
 import codesquad.server.exception.HandlerException;
-import codesquad.http.exception.HttpProtocolException;
 import codesquad.server.exception.MethodNotAllowedException;
-import codesquad.server.exception.NoMatchHandlerException;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,12 +48,9 @@ public class HttpProcessor {
     public void processResponse(WasRequest request, WasResponse response) throws IOException {
 
         try {
-            Optional<Handler> handler = handlerContext.getMappedHandler(request);
-            if (handler.isEmpty()) {
-                throw new NoMatchHandlerException();
-            }
+            Handler handler = handlerContext.getMappedHandler(request);
 
-            handler.get().handle(request, response);
+            handler.handle(request, response);
 
         } catch (HandlerException he) {
             if (he instanceof MethodNotAllowedException) {

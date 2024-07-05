@@ -2,6 +2,7 @@ package codesquad.http;
 
 import static codesquad.util.IOUtil.readLine;
 
+import codesquad.http.exception.HeaderSyntaxException;
 import codesquad.http.exception.HttpProtocolException;
 import codesquad.http.exception.NotSupportedHttpMethodException;
 import java.io.IOException;
@@ -39,6 +40,7 @@ public class HttpRequestParser {
         request.setQueryString(queryPairs);
 
         HttpHeaders headers = parseHeaders(input);
+        request.setHeaders(headers);
 
         String host = getHeaderValue(headers, HttpHeaders.HOST_HEADER);
         request.setHost(host);
@@ -107,9 +109,13 @@ public class HttpRequestParser {
     private static HttpHeaders parseHeaders(InputStream input) throws IOException {
         String headerLine;
         HttpHeaders headers = new HttpHeaders();
-        while (!(headerLine = readLine(input)).isEmpty()) {
-            HttpHeader header = HttpHeader.from(headerLine);
-            headers.setHeader(header);
+        try {
+            while (!(headerLine = readLine(input)).isEmpty()) {
+                HttpHeader header = HttpHeader.from(headerLine);
+                headers.setHeader(header);
+            }
+        } catch (NullPointerException e) {
+            throw new HeaderSyntaxException();
         }
         return headers;
     }
