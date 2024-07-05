@@ -4,9 +4,11 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface Request {
-    Map<String, String> getHeaders();
+    HttpHeaders getHeaders();
 
-    Optional<String> getHeader(String name);
+    Optional<HttpHeader> getHeader(String name);
+
+    Map<String, String> getQueryString();
 
     Map<String, String> getParameters();
 
@@ -18,7 +20,7 @@ public interface Request {
 
     String getPath();
 
-    String getMethod();
+    HttpMethod getMethod();
 
     String getHost();
 }

@@ -1,69 +1,35 @@
 package codesquad.http;
 
-import codesquad.HttpSCStatus;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
-public class WasResponse<T> implements Response<T> {
-    private final String protocol;
-    private final HttpSCStatus status;
-    private final HttpHeader header;
-    private final T body;
+public class WasResponse {
+    private static final int BUFFER_SIZE = 8192;
 
-    public WasResponse(String protocol, HttpSCStatus status, HttpHeader header, T body) {
-        this.protocol = protocol;
-        this.status = status;
-        this.header = header;
-        this.body = body;
+    private OutputStream out;
+
+    public WasResponse(OutputStream out) {
+        this.out = out;
     }
 
-    public static WasResponse<Void> fail(String protocol, HttpSCStatus status, HttpHeader header) {
-        return new WasResponse<>(protocol, status, header, null);
+    public void sendError(String protocol, HttpStatus status, HttpHeaders headers) throws IOException {
+        HttpResponseWriter.writeStatusLine(out, protocol, status);
+        HttpResponseWriter.writeHeaders(out, headers);
     }
 
-    @Override
-    public String getProtocol() {
-        return protocol;
+    public void sendRedirect(String protocol, HttpHeaders headers, String redirectUrl) throws IOException {
+        HttpResponseWriter.writeStatusLine(out, protocol, HttpStatus.FOUND);
+        headers.setHeader(HttpHeaders.LOCATION, redirectUrl);
+        HttpResponseWriter.writeHeaders(out, headers);
     }
 
-    @Override
-    public String getStatusCode() {
-        return status.getCode();
+    public void send(String protocol, HttpStatus status, HttpHeaders headers, InputStream in) throws IOException {
+        HttpResponseWriter.writeStatusLine(out, protocol, status);
+        HttpResponseWriter.writeHeaders(out, headers);
+        HttpResponseWriter.writeBody(out, in);
     }
 
-    @Override
-    public String getStatusMessage() {
-        return status.name();
-    }
-
-    @Override
-    public Map<String, String> getHeaders() {
-        return header.getHeaders();
-    }
-
-    @Override
-    public Optional<String> getHeader(String key) {
-        return header.getHeader(key);
-    }
-
-    @Override
-    public T getBody() {
-        return body;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("WasResponse { ").append(System.lineSeparator());
-        sb.append("protocol='").append(protocol).append('\'').append(System.lineSeparator());
-        sb.append("statusCode='").append(getStatusCode()).append('\'').append(System.lineSeparator());
-        sb.append("statusMeessage='").append(getStatusMessage()).append('\'').append(System.lineSeparator());
-        sb.append("headers=").append(header.getHeaders()).append(System.lineSeparator());
-        sb.append("body=").append(body).append(System.lineSeparator());
-        sb.append("}").append(System.lineSeparator());
-        return sb.toString();
-    }
 }
 
 

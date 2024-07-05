@@ -1,19 +1,32 @@
 package codesquad.http;
 
-import java.util.Map;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Optional;
 
-public interface Response<T> {
+public interface Response {
 
     String getProtocol();
+
+    void setProtocol(String protocol);
 
     String getStatusCode();
 
     String getStatusMessage();
 
-    Map<String, String> getHeaders();
+    void setStatus(HttpStatus httpStatus);
 
-    Optional<String> getHeader(String key);
+    HttpHeaders getHeaders();
 
-    T getBody();
+    void setHeaders(HttpHeaders httpHeaders);
+
+    Optional<HttpHeader> getHeader(String key);
+
+    void setHeader(HttpHeader header);
+
+    OutputStream getOutputStream() throws IOException;
+
+    void setOutputStream(OutputStream outputStream);
+
+    void write(byte[] data) throws IOException;
 }
