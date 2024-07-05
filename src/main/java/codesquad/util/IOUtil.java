@@ -1,4 +1,4 @@
-package codesquad;
+package codesquad.util;
 
 import java.io.IOException;
 import java.io.InputStream;
