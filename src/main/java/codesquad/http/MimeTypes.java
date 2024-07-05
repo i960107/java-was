@@ -1,4 +1,4 @@
-package codesquad;
+package codesquad.http;
 
 public enum MimeTypes {
 
@@ -24,7 +24,11 @@ public enum MimeTypes {
     }
 
     public static String getMimeType(String fileName) {
-        String extension = fileName.split("\\.")[1];
+        int index = fileName.indexOf(".");
+        if (index == -1 || index + 1 >= fileName.length()) {
+            throw new IllegalArgumentException();
+        }
+        String extension = fileName.substring(index + 1);
         return valueOf(extension).getMIMEType();
     }
 

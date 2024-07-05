@@ -1,6 +1,6 @@
 package codesquad.server;
 
-import codesquad.MimeTypes;
+import codesquad.http.MimeTypes;
 import codesquad.http.HttpHeaders;
 import codesquad.http.HttpStatus;
 import codesquad.http.WasRequest;

@@ -19,6 +19,8 @@ public class HttpHeaders {
 
     public static final String LOCATION = "Location";
 
+    public static final String ACCEPT = "Accept";
+
     private final Set<HttpHeader> headers;
 
     public HttpHeaders() {
