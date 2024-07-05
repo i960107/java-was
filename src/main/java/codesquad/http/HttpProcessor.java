@@ -19,9 +19,11 @@ public class HttpProcessor {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private static final String STATIC_FOLDER = "static";
+    private final HandlerContext handlerContext;
 
-    private static final String INDEX_PAGE = "/index.html";
+    public HttpProcessor(HandlerContext handlerContext) {
+        this.handlerContext = handlerContext;
+    }
 
     public void process(Socket socket) throws IOException {
         try (
