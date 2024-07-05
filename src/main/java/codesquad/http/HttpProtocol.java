@@ -1,17 +1,17 @@
 package codesquad.http;
 
+import codesquad.server.HandlerContext;
 import codesquad.http.JIoEndpoint.SocketProcessor;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class HttpProtocol {
     private static final String namePrefix = "http-bio";
 
     private final Endpoint<Socket, SocketProcessor> endpoint;
 
-    public HttpProtocol() {
+    public HttpProtocol(HandlerContext handlerContext) {
         NamedThreadFactory acceptorThreadFactory = new NamedThreadFactory("http-bio-acceptor");
         NamedThreadFactory workerThreadFactory = new NamedThreadFactory(namePrefix);
 
@@ -19,7 +19,9 @@ public class HttpProtocol {
                 8080,
                 50,
                 Executors.newSingleThreadExecutor(acceptorThreadFactory),
-                Executors.newFixedThreadPool(calculateOptimalThreads(), workerThreadFactory));
+                Executors.newFixedThreadPool(calculateOptimalThreads(), workerThreadFactory),
+                () -> new HttpProcessor(handlerContext)
+        );
     }
 
     private int calculateOptimalThreads() {

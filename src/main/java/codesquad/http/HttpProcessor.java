@@ -1,16 +1,16 @@
 package codesquad.http;
 
-import codesquad.HttpSCStatus;
-import codesquad.IOUtil;
-import codesquad.MimeTypes;
+import codesquad.server.Handler;
+import codesquad.server.HandlerContext;
+import codesquad.server.exception.HandlerException;
+import codesquad.http.exception.HttpProtocolException;
+import codesquad.server.exception.MethodNotAllowedException;
+import codesquad.server.exception.NoMatchHandlerException;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Socket;
-import java.net.URL;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,72 +19,51 @@ public class HttpProcessor {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private static final String STATIC_FOLDER = "static";
+    private final HandlerContext handlerContext;
 
-    private static final String INDEX_PAGE = "/index.html";
+    public HttpProcessor(HandlerContext handlerContext) {
+        this.handlerContext = handlerContext;
+    }
 
     public void process(Socket socket) throws IOException {
         try (
                 BufferedInputStream inputStream = new BufferedInputStream(socket.getInputStream());
                 BufferedOutputStream outputStream = new BufferedOutputStream(socket.getOutputStream());
         ) {
-            Request request = processRequest(inputStream);
-            processResponse(outputStream, request, request.getPath());
+            WasRequest request = new WasRequest();
+            WasResponse response = new WasResponse(outputStream);
+            try {
+                processRequest(request, inputStream);
+                processResponse(request, response);
+            } catch (HttpProtocolException e) {
+                response.sendError(request.getProtocol(), HttpStatus.BAD_REQUEST, HttpHeaders.getDefault());
+            }
         }
     }
 
-    public Request processRequest(InputStream input) throws IOException {
-        Request request = HttpRequestParser.parse(input);
+    public WasRequest processRequest(WasRequest request, InputStream input) throws IOException {
+        HttpRequestParser.parse(request, input);
         log.info(request.toString());
         return request;
     }
 
-    public void processResponse(OutputStream outputStream, Request request, String path) throws IOException {
-        Response<?> response = null;
+    public void processResponse(WasRequest request, WasResponse response) throws IOException {
 
-        HttpHeader header = new HttpHeader();
-        addCommonHeader(header);
+        try {
+            Optional<Handler> handler = handlerContext.getMappedHandler(request);
+            if (handler.isEmpty()) {
+                throw new NoMatchHandlerException();
+            }
 
-        Optional<File> file = getFile(path);
+            handler.get().handle(request, response);
 
-        if (file.isEmpty()) {
-            response = WasResponse.fail(request.getProtocol(), HttpSCStatus.NOT_FOUND, header);
-        } else {
-            File fileToResponse = file.get();
-            header.setHeader(HttpHeader.CONTENT_LENGTH_HEADER, String.valueOf(fileToResponse.length()));
-            header.setHeader(HttpHeader.CONTENT_TYPE_HEADER, MimeTypes.getMimeType(fileToResponse.getName()));
-            response = new WasResponse<File>(
-                    request.getProtocol(),
-                    HttpSCStatus.OK,
-                    header,
-                    fileToResponse
-            );
+        } catch (HandlerException he) {
+            if (he instanceof MethodNotAllowedException) {
+                response.sendError(request.getProtocol(), HttpStatus.METHOD_NOT_ALLOWED, HttpHeaders.getDefault());
+            } else {
+                response.sendError(request.getProtocol(), HttpStatus.NOT_FOUND, HttpHeaders.getDefault());
+            }
         }
-
-        log.info(response.toString());
-        HttpResponseWriter.write(outputStream, response);
-    }
-
-    private void addCommonHeader(HttpHeader headers) {
-        headers.setHeader(HttpHeader.DATE_HEADER, IOUtil.getDateStringUtc());
-        headers.setHeader(HttpHeader.CONNECTION_HEADER, "close");
-    }
-
-    private Optional<File> getFile(String path) {
-        URL resource = getClass().getClassLoader().getResource(STATIC_FOLDER + path);
-
-        if (resource == null) {
-            return Optional.empty();
-        }
-
-        File file = new File(resource.getFile());
-        if (!file.exists()) {
-            return Optional.empty();
-        }
-        if (file.isDirectory()) {
-            file = new File(file, INDEX_PAGE);
-        }
-        return file.exists() ? Optional.of(file) : Optional.empty();
     }
 
 }

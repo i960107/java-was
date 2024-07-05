@@ -6,8 +6,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,15 +22,18 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
 
     private final ArrayBlockingQueue<HttpProcessor> processors;
 
+    private final Supplier<HttpProcessor> processorSupplier;
     private final int port;
 
     private final int backlog;
 
     private boolean running = false;
 
-
-    public JIoEndpoint(int port, int backlog, ExecutorService acceptorExecutorService,
-                       ExecutorService workerExecutorService) {
+    public JIoEndpoint(int port,
+                       int backlog,
+                       ExecutorService acceptorExecutorService,
+                       ExecutorService workerExecutorService,
+                       Supplier<HttpProcessor> processorSupplier) {
         this.port = port;
         this.backlog = backlog;
         this.acceptorExecutorService = acceptorExecutorService;
@@ -40,6 +43,7 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
         log.info("{} worker threads created", workers);
 
         this.processors = new ArrayBlockingQueue<>(workers);
+        this.processorSupplier = processorSupplier;
     }
 
     @Override
@@ -78,7 +82,7 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
     private HttpProcessor getProcessor() {
         HttpProcessor processor = processors.poll();
         if (processor == null) {
-            processor = new HttpProcessor();
+            processor = processorSupplier.get();
         }
         return processor;
     }
