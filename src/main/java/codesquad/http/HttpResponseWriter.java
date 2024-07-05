@@ -1,47 +1,41 @@
 package codesquad.http;
 
-import static codesquad.IOUtil.writeLine;
+import static codesquad.util.IOUtil.writeLine;
 
 import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Map;
 
 public class HttpResponseWriter {
 
     public static final int BUFFER_SIZE = 8192;
 
-    public static void write(OutputStream output, Response<?> response) throws IOException {
-
+    public static void writeStatusLine(OutputStream output, String protocol, HttpStatus status) throws IOException {
         String statusLine = String.join(" ",
-                response.getProtocol(),
-                response.getStatusCode(),
-                response.getStatusMessage());
-        writeLine(output, statusLine);
+                protocol,
+                status.getCode(),
+                status.name());
 
-        for (Map.Entry<String, String> header : response.getHeaders().entrySet()) {
-            writeLine(output, String.join(": ", header.getKey(), header.getValue()));
+        writeLine(output, statusLine);
+    }
+
+    public static void writeHeaders(OutputStream output, HttpHeaders headers) throws IOException {
+        for (HttpHeader header : headers.getHeaders()) {
+            writeLine(output, header.toString());
         }
 
         writeLine(output, null);
-
-        if (response.getHeader(HttpHeader.CONTENT_LENGTH_HEADER).isPresent()
-                && response.getBody() != null
-                && response.getBody().getClass().equals(File.class)
-        ) {
-            File file = (File) response.getBody();
-            try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))) {
-                byte[] buffer = new byte[BUFFER_SIZE];
-                int bytesRead;
-                while ((bytesRead = bis.read(buffer)) != -1) {
-                    output.write(buffer, 0, bytesRead);
-                }
-            }
-        }
-
-        output.flush();
     }
 
+    public static void writeBody(OutputStream output, InputStream input) throws IOException {
+        try (BufferedInputStream bis = new BufferedInputStream(input)) {
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int bytesRead;
+            while ((bytesRead = bis.read(buffer)) != -1) {
+                output.write(buffer, 0, bytesRead);
+            }
+        }
+        output.flush();
+    }
 }
