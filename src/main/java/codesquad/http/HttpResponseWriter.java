@@ -2,9 +2,7 @@ package codesquad.http;
 
 import static codesquad.util.IOUtil.writeLine;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 
 public class HttpResponseWriter {
@@ -28,14 +26,8 @@ public class HttpResponseWriter {
         writeLine(output, null);
     }
 
-    public static void writeBody(OutputStream output, InputStream input) throws IOException {
-        try (BufferedInputStream bis = new BufferedInputStream(input)) {
-            byte[] buffer = new byte[BUFFER_SIZE];
-            int bytesRead;
-            while ((bytesRead = bis.read(buffer)) != -1) {
-                output.write(buffer, 0, bytesRead);
-            }
-        }
+    public static void writeBody(OutputStream output, byte[] data) throws IOException {
+        output.write(data);
         output.flush();
     }
 }
