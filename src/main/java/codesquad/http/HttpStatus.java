@@ -1,6 +1,6 @@
-package codesquad;
+package codesquad.http.exception;
 
-public enum HttpSCStatus {
+public enum HttpStatus {
     OK("200"),
     CREATED("201"),
     MOVED_PERMANENTLY("301"),
@@ -15,7 +15,7 @@ public enum HttpSCStatus {
 
     private final String code;
 
-    HttpSCStatus(String code) {
+    HttpStatus(String code) {
         this.code = code;
     }
 

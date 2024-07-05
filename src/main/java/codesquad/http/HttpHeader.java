@@ -1,44 +1,112 @@
 package codesquad.http;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import codesquad.http.exception.HeaderSyntaxException;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 public class HttpHeader {
-    public static final String CONTENT_LENGTH_HEADER = "Content-Length";
 
-    public static final String CONTENT_TYPE_HEADER = "Content-Type";
+    private static final String KEY_VALUE_DELIMITER = ":";
 
-    public static final String HOST_HEADER = "Host";
+    private static final String VALUES_DELIMITER = ";";
 
-    public static final String DATE_HEADER = "Date";
+    private String key;
 
-    public static final String CONNECTION_HEADER = "Connection";
+    private Set<String> values;
 
-    private final Map<String, String> headers;
-
-    public HttpHeader() {
-        this.headers = new HashMap<>();
+    public HttpHeader(String key, Set<String> values) {
+        validateKey(key);
+        validateValues(values);
+        this.key = key;
+        this.values = values;
     }
 
-    public HttpHeader(Map<String, String> headers) {
-        this.headers = headers;
+    public static HttpHeader from(String headerLine) {
+        String[] split = headerLine.split(KEY_VALUE_DELIMITER);
+
+        String key = split[0];
+        String[] valuesToken = split[1].strip().split(VALUES_DELIMITER);
+
+        Set<String> values = new HashSet<>();
+        for (String value : valuesToken) {
+            String trimmed = value.trim();
+            values.add(trimmed);
+        }
+
+        return new HttpHeader(key, values);
     }
 
-    public Map<String, String> getHeaders() {
-        return Collections.unmodifiableMap(headers);
+    private void validateKey(String key) {
+        if (key == null || key.isBlank() || key.strip().length() != key.length()) {
+            throw new HeaderSyntaxException();
+        }
     }
 
-    public Optional<String> getHeader(String name) {
-        return Optional.ofNullable(headers.get(name));
+    private void validateValues(Set<String> values) throws HeaderSyntaxException {
+        if (values == null || values.isEmpty()) {
+            throw new HeaderSyntaxException();
+        }
+        boolean hasInValidValue = values.stream()
+                .anyMatch(value -> value.strip().length() != value.length());
+
+        if (hasInValidValue) {
+            throw new HeaderSyntaxException();
+        }
     }
 
-    public boolean containsKey(String name) {
-        return headers.containsKey(name);
+
+    public String getKey() {
+        return key;
     }
 
-    public void setHeader(String name, String value) {
-        headers.put(name, value);
+    public Set<String> getValues() {
+        return values;
+    }
+
+    public Optional<String> getOnlyValue() {
+        if (values.size() == 1) {
+            return Optional.of(values.iterator().next());
+        }
+        return Optional.empty();
+    }
+
+    public boolean hasKey(String key) {
+        return this.key.equals(key);
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        HttpHeader that = (HttpHeader) o;
+        return Objects.equals(key, that.key) && Objects.equals(values, that.values);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(key, values);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(key).append(KEY_VALUE_DELIMITER).append(" ");
+
+        int count = 0;
+        int size = values.size();
+        for (String s : values) {
+            sb.append(s);
+            if (++count < size) {
+                sb.append(VALUES_DELIMITER);
+            }
+        }
+        return sb.toString();
     }
 }

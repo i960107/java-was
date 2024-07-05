@@ -1,9 +1,5 @@
 package codesquad;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -19,8 +15,6 @@ public class IOUtil {
     private static final char CR = '\r';
 
     private static final char LF = '\n';
-
-    private static final int BUFFER_SIZE = 4096;
 
     public static String readLine(InputStream input) throws IOException {
         int ch;
