@@ -1,7 +1,6 @@
 package codesquad.http;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 
 public class WasResponse {
@@ -24,10 +23,10 @@ public class WasResponse {
         HttpResponseWriter.writeHeaders(out, headers);
     }
 
-    public void send(String protocol, HttpStatus status, HttpHeaders headers, InputStream in) throws IOException {
+    public void send(String protocol, HttpStatus status, HttpHeaders headers, byte[] body) throws IOException {
         HttpResponseWriter.writeStatusLine(out, protocol, status);
         HttpResponseWriter.writeHeaders(out, headers);
-        HttpResponseWriter.writeBody(out, in);
+        HttpResponseWriter.writeBody(out, body);
     }
 
 }

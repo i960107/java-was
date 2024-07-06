@@ -1,15 +1,13 @@
 package codesquad.server;
 
-import codesquad.http.MimeTypes;
 import codesquad.http.HttpHeaders;
 import codesquad.http.HttpStatus;
+import codesquad.http.MimeTypes;
 import codesquad.http.WasRequest;
 import codesquad.http.WasResponse;
 import codesquad.server.exception.ResourceNotFoundException;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,14 +20,15 @@ public class DefaultHandler implements Handler {
 
     @Override
     public void handle(WasRequest request, WasResponse response) throws IOException {
-        File file = getFile(request.getPath());
+        InputStream file = getFile(request.getPath());
+        byte[] bytes = file.readAllBytes();
 
         HttpHeaders headers = new HttpHeaders();
         HttpHeaders.setCommonHeader(headers);
-        headers.setHeader(HttpHeaders.CONTENT_LENGTH_HEADER, String.valueOf(file.length()));
-        headers.setHeader(HttpHeaders.CONTENT_TYPE_HEADER, MimeTypes.getMimeType(file.getName()));
+        headers.setHeader(HttpHeaders.CONTENT_LENGTH_HEADER, String.valueOf(bytes.length));
+        headers.setHeader(HttpHeaders.CONTENT_TYPE_HEADER, MimeTypes.getMimeType(request.getPath()));
 
-        response.send(request.getProtocol(), HttpStatus.OK, headers, new FileInputStream(file));
+        response.send(request.getProtocol(), HttpStatus.OK, headers, bytes);
     }
 
     @Override
@@ -49,18 +48,13 @@ public class DefaultHandler implements Handler {
         return true;
     }
 
-    private File getFile(String path) {
-        URL resource = getClass().getClassLoader().getResource(STATIC_FOLDER + path);
+    private InputStream getFile(String path) throws IOException {
+        InputStream resource = getClass().getClassLoader().getResourceAsStream(STATIC_FOLDER + path);
 
         if (resource == null) {
             throw new ResourceNotFoundException();
         }
 
-        File file = new File(resource.getFile());
-        if (file.isDirectory() || !file.exists()) {
-            throw new ResourceNotFoundException();
-        }
-
-        return file;
+        return resource;
     }
 }
