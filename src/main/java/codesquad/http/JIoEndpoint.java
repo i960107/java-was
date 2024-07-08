@@ -96,9 +96,9 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
         public void run() {
             while (running) {
                 try {
-                    log.info("acceptor accepts connection and delegating it to worker thread");
                     Socket socket = serverSocket.accept();
                     SocketProcessor worker = createWorker(socket);
+                    log.info("acceptor accepts connection and delegating it to worker thread");
                     workerExecutorService.execute(worker);
                 } catch (IOException exception) {
                     log.warn("fail while accepting socket and allocating it to worker thread");

@@ -1,10 +1,10 @@
 package codesquad.http;
 
 import codesquad.http.exception.HeaderSyntaxException;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 public class HttpHeader {
 
@@ -14,9 +14,9 @@ public class HttpHeader {
 
     private String key;
 
-    private Set<String> values;
+    private List<String> values;
 
-    public HttpHeader(String key, Set<String> values) {
+    public HttpHeader(String key, List<String> values) {
         validateKey(key);
         validateValues(values);
         this.key = key;
@@ -29,7 +29,7 @@ public class HttpHeader {
                 .substring(headerLine.indexOf(KEY_VALUE_DELIMITER) + 1).strip()
                 .split(VALUES_DELIMITER);
 
-        Set<String> values = new HashSet<>();
+        List<String> values = new ArrayList<>();
         for (String value : valuesToken) {
             String trimmed = value.trim();
             values.add(trimmed);
@@ -44,7 +44,7 @@ public class HttpHeader {
         }
     }
 
-    private void validateValues(Set<String> values) throws HeaderSyntaxException {
+    private void validateValues(List<String> values) throws HeaderSyntaxException {
         if (values == null || values.isEmpty()) {
             throw new HeaderSyntaxException();
         }
@@ -61,7 +61,7 @@ public class HttpHeader {
         return key;
     }
 
-    public Set<String> getValues() {
+    public List<String> getValues() {
         return values;
     }
 
