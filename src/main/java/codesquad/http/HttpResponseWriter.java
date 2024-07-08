@@ -28,6 +28,5 @@ public final class HttpResponseWriter {
 
     public static void writeBody(OutputStream output, byte[] data) throws IOException {
         output.write(data);
-        output.flush();
     }
 }

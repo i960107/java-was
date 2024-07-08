@@ -15,18 +15,21 @@ public class WasResponse {
     public void sendError(String protocol, HttpStatus status, HttpHeaders headers) throws IOException {
         HttpResponseWriter.writeStatusLine(out, protocol, status);
         HttpResponseWriter.writeHeaders(out, headers);
+        out.flush();
     }
 
     public void sendRedirect(String protocol, HttpHeaders headers, String redirectUrl) throws IOException {
         HttpResponseWriter.writeStatusLine(out, protocol, HttpStatus.FOUND);
         headers.setHeader(HttpHeaders.LOCATION, redirectUrl);
         HttpResponseWriter.writeHeaders(out, headers);
+        out.flush();
     }
 
     public void send(String protocol, HttpStatus status, HttpHeaders headers, byte[] body) throws IOException {
         HttpResponseWriter.writeStatusLine(out, protocol, status);
         HttpResponseWriter.writeHeaders(out, headers);
         HttpResponseWriter.writeBody(out, body);
+        out.flush();
     }
 
 }
