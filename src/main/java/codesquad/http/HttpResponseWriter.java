@@ -5,7 +5,7 @@ import static codesquad.util.IOUtil.writeLine;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class HttpResponseWriter {
+public final class HttpResponseWriter {
 
     public static final int BUFFER_SIZE = 8192;
 

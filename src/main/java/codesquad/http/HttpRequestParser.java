@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 // 메서드 호출 순서에 따라서 파싱 결과 달라짐 주의!
-public class HttpRequestParser {
+public final class HttpRequestParser {
     private final static String CHARSET = "UTF-8";
 
     public static void parse(WasRequest request, InputStream input) throws IOException {
