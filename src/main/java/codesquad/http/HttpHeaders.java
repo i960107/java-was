@@ -42,6 +42,10 @@ public class HttpHeaders {
         headers.setHeader(HttpHeaders.CONNECTION_HEADER, "close");
     }
 
+    public static HttpHeaders empty() {
+        return new HttpHeaders();
+    }
+
 
     public List<HttpHeader> getHeaders() {
         return Collections.unmodifiableList(headers);
@@ -51,7 +55,15 @@ public class HttpHeaders {
         return headers
                 .stream()
                 .filter(header -> header.hasKey(key))
-                .findAny();
+                .findFirst();
+    }
+
+    public Optional<String> getHeaderSingleValue(String key) {
+        Optional<HttpHeader> header = getHeader(key);
+        if(header.isEmpty()){
+            return Optional.empty();
+        }
+        return header.get().getSingleValue();
     }
 
     public boolean contains(String key) {
@@ -71,6 +83,10 @@ public class HttpHeaders {
 
     public void setHeader(HttpHeader header) {
         headers.add(header);
+    }
+
+    public int size(){
+        return headers.size();
     }
 
     @Override

@@ -65,7 +65,7 @@ public class HttpHeader {
         return values;
     }
 
-    public Optional<String> getOnlyValue() {
+    public Optional<String> getSingleValue() {
         if (values.size() == 1) {
             return Optional.of(values.iterator().next());
         }
