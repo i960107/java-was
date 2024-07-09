@@ -25,10 +25,10 @@ public class UrlMappingHandler implements Handler {
     public void handle(WasRequest request, WasResponse response) throws IOException {
         try {
             RequestProcessor processor = mappings.get(request.getPath());
-            processor.process(request, response);
             log.info("request is handled by " + processor.getClass().getName());
+            processor.process(request, response);
         } catch (ProcessorException e) {
-            response.sendError(request.getProtocol(), HttpStatus.INTERNAL_SERVER_ERROR, HttpHeaders.getDefault());
+            response.sendError(HttpStatus.INTERNAL_SERVER_ERROR, HttpHeaders.getDefault());
         }
     }
 
