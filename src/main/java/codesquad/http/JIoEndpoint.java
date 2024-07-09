@@ -23,6 +23,7 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
     private final ArrayBlockingQueue<HttpProcessor> processors;
 
     private final Supplier<HttpProcessor> processorSupplier;
+
     private final int port;
 
     private final int backlog;
@@ -121,8 +122,6 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
             HttpProcessor processor = getProcessor();
             try {
                 processor.process(socket);
-            } catch (IOException exception) {
-                log.warn("fail while processing socket");
             } finally {
                 recycleProcessor(processor);
                 try {

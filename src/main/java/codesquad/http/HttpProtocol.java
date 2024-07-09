@@ -15,9 +15,10 @@ public class HttpProtocol {
         NamedThreadFactory acceptorThreadFactory = new NamedThreadFactory("http-bio-acceptor");
         NamedThreadFactory workerThreadFactory = new NamedThreadFactory(namePrefix);
 
+        int workerThreadCount = calculateOptimalThreads();
         this.endpoint = new JIoEndpoint(
                 8080,
-                50,
+                workerThreadCount * 2,
                 Executors.newSingleThreadExecutor(acceptorThreadFactory),
                 Executors.newFixedThreadPool(calculateOptimalThreads(), workerThreadFactory),
                 () -> new HttpProcessor(handlerContext)
@@ -26,7 +27,7 @@ public class HttpProtocol {
 
     private int calculateOptimalThreads() {
         int availableProcessor = Runtime.getRuntime().availableProcessors();
-        return availableProcessor * 2;
+        return availableProcessor * 10;
     }
 
     public void start() throws IOException {
