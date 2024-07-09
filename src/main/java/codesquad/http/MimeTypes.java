@@ -1,5 +1,7 @@
 package codesquad.http;
 
+import java.util.Arrays;
+
 public enum MimeTypes {
 
     aac("audio/aac"),
@@ -14,7 +16,9 @@ public enum MimeTypes {
     ico("image/x-icon"),
     js("application/javascript"),
     png("image/png"),
-    jpg("image/jpeg");
+    jpg("image/jpeg"),
+    json("application/json"),
+    form_data("application/x-www-form-urlencoded");
 
 
     private String MIMEType;
@@ -23,7 +27,7 @@ public enum MimeTypes {
         this.MIMEType = MIMEType;
     }
 
-    public static String getMimeType(String fileName) {
+    public static String getMimeTypeFromExtension(String fileName) {
         int index = fileName.indexOf(".");
         if (index == -1 || index + 1 >= fileName.length()) {
             throw new IllegalArgumentException();
@@ -31,6 +35,14 @@ public enum MimeTypes {
         String extension = fileName.substring(index + 1);
         return valueOf(extension).getMIMEType();
     }
+
+    public static MimeTypes getMimeTypeFromContentType(String contentType) {
+        return Arrays.stream(MimeTypes.values())
+                .filter(mime -> mime.getMIMEType().equals(contentType))
+                .findFirst()
+                .orElseThrow(IllegalArgumentException::new);
+    }
+
 
     public String getMIMEType() {
         return MIMEType;
