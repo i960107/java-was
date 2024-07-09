@@ -1,20 +1,24 @@
 package codesquad.http;
 
 import static codesquad.util.IOUtil.readLine;
+import static codesquad.util.IOUtil.readToSize;
 
 import codesquad.http.exception.HeaderSyntaxException;
-import codesquad.http.exception.HttpProtocolException;
 import codesquad.http.exception.NotSupportedHttpMethodException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 // 메서드 호출 순서에 따라서 파싱 결과 달라짐 주의!
 public final class HttpRequestParser {
-    private final static String CHARSET = "UTF-8";
+
+    private static final String DEFAULT_CHARSET = "UTF-8";
 
     public static void parse(WasRequest request, InputStream input) throws IOException {
         String requestLine = parseRequestLine(input);
@@ -32,29 +36,40 @@ public final class HttpRequestParser {
         String protocol = requestLineParts[2];
         request.setProtocol(protocol);
 
-        String pathWithQueryString = URLDecoder.decode(requestLineParts[1], CHARSET);
+        String pathWithQueryString = requestLineParts[1];
         String path = getPath(pathWithQueryString);
         request.setPath(path);
 
-        Map<String, String> queryPairs = getQueryPairs(pathWithQueryString);
-        request.setQueryString(queryPairs);
+        Map<String, List<String>> queryPairs = parseQueryString(pathWithQueryString);
+        if (!queryPairs.isEmpty()) {
+            request.addParameters(queryPairs);
+        }
 
         HttpHeaders headers = parseHeaders(input);
+        validateHeader(headers);
         request.setHeaders(headers);
-
-        String host = getHeaderValue(headers, HttpHeaders.HOST_HEADER);
+        String host = headers.getHeaderSingleValue(HttpHeaders.HOST_HEADER).get();
         request.setHost(host);
+        headers.getHeaderSingleValue(HttpHeaders.CONTENT_TYPE_HEADER)
+                .ifPresent(value -> {
+                    MimeTypes contentType = MimeTypes.getMimeTypeFromContentType(value);
+                    request.setContentType(contentType);
+                });
 
-        Map<String, String> parameters = parseParameters(input);
-        request.setParameters(parameters);
-
-        byte[] body = null;
-
-        if (headers.contains(HttpHeaders.CONTENT_LENGTH_HEADER)) {
-            int contentLength = Integer.parseInt(getHeaderValue(headers, HttpHeaders.CONTENT_LENGTH_HEADER));
-            body = parseBody(input, contentLength);
+        Optional<String> headerSingleValue = headers.getHeaderSingleValue(HttpHeaders.CONTENT_LENGTH_HEADER);
+        if (headerSingleValue.isEmpty()) {
+            return;
         }
-        request.setBody(body);
+
+        int contentLength = Integer.parseInt(headerSingleValue.get());
+        if (isFormData(request.getContentType())) {
+            String formData = new String(readToSize(input, contentLength), DEFAULT_CHARSET);
+            Map<String, List<String>> parameters = parseRequestParameters(formData);
+            request.addParameters(parameters);
+        } else {
+            byte[] bytes = parseBody(input, contentLength);
+            request.setBody(bytes);
+        }
     }
 
     private static String parseRequestLine(InputStream input) throws IOException {
@@ -84,47 +99,72 @@ public final class HttpRequestParser {
         return path;
     }
 
-    private static Map<String, String> getQueryPairs(String pathWithQueryString) {
-        Map<String, String> queryPairs = new HashMap<>();
-
+    private static Map<String, List<String>> parseQueryString(String pathWithQueryString) {
         int index = pathWithQueryString.indexOf("?");
         if (index == -1 || index + 1 > pathWithQueryString.length()) {
-            return queryPairs;
+            return Map.of();
         }
 
-        String queryString = pathWithQueryString.substring(index + 1);
-        String[] pairs = queryString.split("&");
-        Arrays.stream(pairs)
-                .forEach(pair -> {
-                    int separatorIndex = pair.indexOf("=");
-                    if (separatorIndex != -1 && separatorIndex + 1 < pair.length()) {
-                        String key = pair.substring(0, separatorIndex);
-                        String value = pair.substring(separatorIndex + 1);
-                        queryPairs.put(key, value);
+        return parseRequestParameters(pathWithQueryString.substring(index + 1));
+    }
+
+    private static Map<String, List<String>> parseRequestParameters(String parameterString) {
+        Map<String, List<String>> parameters = new HashMap<>();
+        String[] pairs = parameterString.split("&");
+        try {
+            for (String pair : pairs) {
+                int separatorIndex = pair.indexOf("=");
+                if (separatorIndex != -1 && separatorIndex + 1 < pair.length()) {
+                    String key = URLDecoder.decode(pair.substring(0, separatorIndex), DEFAULT_CHARSET);
+                    String value = URLDecoder.decode(pair.substring(separatorIndex + 1), DEFAULT_CHARSET);
+                    if (!parameters.containsKey(key)) {
+                        parameters.put(key, new ArrayList<>());
                     }
-                });
-        return queryPairs;
+                    parameters.get(key).add(value);
+                }
+            }
+        } catch (UnsupportedEncodingException ex) {
+            //todo
+        }
+        return parameters;
     }
 
     private static HttpHeaders parseHeaders(InputStream input) throws IOException {
         String headerLine;
         HttpHeaders headers = new HttpHeaders();
-        try {
-            while (!(headerLine = readLine(input)).isEmpty()) {
-                HttpHeader header = HttpHeader.from(headerLine);
-                headers.setHeader(header);
-            }
-        } catch (NullPointerException e) {
-            throw new HeaderSyntaxException();
+        while (!(headerLine = readLine(input)).isEmpty()) {
+            HttpHeader header = HttpHeader.from(headerLine);
+            headers.setHeader(header);
         }
         return headers;
     }
 
-    private static Map<String, String> parseParameters(InputStream input) throws IOException {
-        //todo parameter 있는 경우 parameter로 파싱 필요
-        Map<String, String> parameters = new HashMap<>();
-        return parameters;
+    private static void validateHeader(HttpHeaders headers) {
+        boolean isValid = hasSingleValue(headers, HttpHeaders.HOST_HEADER);
+
+        Optional<String> contentType = headers.getHeaderSingleValue(HttpHeaders.CONTENT_TYPE_HEADER);
+        if (contentType.isPresent()) {
+            MimeTypes type = MimeTypes.getMimeTypeFromContentType(contentType.get());
+            if (isFormData(type) && !hasSingleValue(headers, HttpHeaders.CONTENT_LENGTH_HEADER)) {
+                isValid = false;
+            }
+        }
+
+        if (!isValid) {
+            throw new HeaderSyntaxException();
+        }
+
     }
+
+    private static boolean hasSingleValue(HttpHeaders headers, String key) {
+        return headers.getHeaderSingleValue(key).isPresent();
+    }
+
+    private static boolean isFormData(MimeTypes contentType) {
+        return contentType != null &&
+                contentType.equals(MimeTypes.form_data);
+    }
+
 
     private static byte[] parseBody(InputStream input, int contentLength) throws IOException {
         byte[] body = new byte[contentLength];
@@ -133,12 +173,5 @@ public final class HttpRequestParser {
             throw new IOException("incomplete body read");
         }
         return body;
-    }
-
-    private static String getHeaderValue(HttpHeaders headers, String key) {
-        return headers.getHeader(HttpHeaders.HOST_HEADER)
-                .orElseThrow(() -> new HttpProtocolException(key + " header not exist"))
-                .getOnlyValue()
-                .orElseThrow(() -> new HttpProtocolException(key + " header has multi value"));
     }
 }
