@@ -4,6 +4,7 @@ import static codesquad.util.IOUtil.readLine;
 import static codesquad.util.IOUtil.readToSize;
 
 import codesquad.http.exception.HeaderSyntaxException;
+import codesquad.http.exception.HttpProtocolException;
 import codesquad.http.exception.NotSupportedHttpMethodException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,15 +76,15 @@ public final class HttpRequestParser {
     private static String parseRequestLine(InputStream input) throws IOException {
         String requestLine = readLine(input);
         if (requestLine == null || requestLine.isEmpty()) {
-            throw new IOException("empty request line");
+            throw new HttpProtocolException("empty request line");
         }
         return requestLine;
     }
 
-    private static String[] splitRequestLine(String requestLine) throws IOException {
+    private static String[] splitRequestLine(String requestLine) {
         String[] parts = requestLine.split(" ");
         if (parts.length != 3) {
-            throw new IOException("invalid request line");
+            throw new HttpProtocolException("invalid request line");
         }
         return parts;
     }
@@ -132,9 +133,13 @@ public final class HttpRequestParser {
     private static HttpHeaders parseHeaders(InputStream input) throws IOException {
         String headerLine;
         HttpHeaders headers = new HttpHeaders();
-        while (!(headerLine = readLine(input)).isEmpty()) {
-            HttpHeader header = HttpHeader.from(headerLine);
-            headers.setHeader(header);
+        try {
+            while (!(headerLine = readLine(input)).isEmpty()) {
+                HttpHeader header = HttpHeader.from(headerLine);
+                headers.setHeader(header);
+            }
+        } catch (NullPointerException e) {
+            throw new HttpProtocolException("blank line is required after headers");
         }
         return headers;
     }
@@ -170,7 +175,7 @@ public final class HttpRequestParser {
         byte[] body = new byte[contentLength];
         int read = input.read(body, 0, contentLength);
         if (read != contentLength || input.available() > 0) {
-            throw new IOException("incomplete body read");
+            throw new HttpProtocolException("incomplete body read");
         }
         return body;
     }
