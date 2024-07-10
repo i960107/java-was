@@ -1,7 +1,6 @@
 package codesquad.server;
 
 import codesquad.http.HttpHeaders;
-import codesquad.http.HttpStatus;
 import codesquad.http.MimeTypes;
 import codesquad.http.WasRequest;
 import codesquad.http.WasResponse;
@@ -26,9 +25,9 @@ public class DefaultHandler implements Handler {
         HttpHeaders headers = new HttpHeaders();
         HttpHeaders.setCommonHeader(headers);
         headers.setHeader(HttpHeaders.CONTENT_LENGTH_HEADER, String.valueOf(bytes.length));
-        headers.setHeader(HttpHeaders.CONTENT_TYPE_HEADER, MimeTypes.getMimeType(request.getPath()));
+        headers.setHeader(HttpHeaders.CONTENT_TYPE_HEADER, MimeTypes.getMimeTypeFromExtension(request.getPath()));
 
-        response.send(request.getProtocol(), HttpStatus.OK, headers, bytes);
+        response.send(headers, bytes);
     }
 
     @Override
@@ -37,18 +36,15 @@ public class DefaultHandler implements Handler {
     }
 
     private boolean hasSupportedExtension(String path) {
-        if (!path.contains(".")) {
-            return false;
-        }
         try {
-            MimeTypes.getMimeType(path);
+            MimeTypes.getMimeTypeFromExtension(path);
         } catch (IllegalArgumentException e) {
             return false;
         }
         return true;
     }
 
-    private InputStream getFile(String path) throws IOException {
+    private InputStream getFile(String path) {
         InputStream resource = getClass().getClassLoader().getResourceAsStream(STATIC_FOLDER + path);
 
         if (resource == null) {

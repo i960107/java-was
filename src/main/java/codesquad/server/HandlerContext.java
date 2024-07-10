@@ -2,17 +2,17 @@ package codesquad.server;
 
 import codesquad.http.WasRequest;
 import codesquad.server.exception.NoMatchHandlerException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.LinkedList;
+import java.util.List;
 
 public class HandlerContext {
 
     private static HandlerContext INSTANCE;
 
-    private Set<Handler> handlers;
+    private List<Handler> handlers;
 
     private HandlerContext() {
-        handlers = new HashSet<>();
+        handlers = new LinkedList<>();
     }
 
     public static HandlerContext getInstance() {
@@ -31,6 +31,6 @@ public class HandlerContext {
         return handlers.stream()
                 .filter(handler -> handler.canHandle(request))
                 .findFirst()
-                .orElseThrow(() -> new NoMatchHandlerException());
+                .orElseThrow(NoMatchHandlerException::new);
     }
 }

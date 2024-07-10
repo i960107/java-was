@@ -23,6 +23,7 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
     private final ArrayBlockingQueue<HttpProcessor> processors;
 
     private final Supplier<HttpProcessor> processorSupplier;
+
     private final int port;
 
     private final int backlog;
@@ -96,9 +97,9 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
         public void run() {
             while (running) {
                 try {
-                    log.info("acceptor accepts connection and delegating it to worker thread");
                     Socket socket = serverSocket.accept();
                     SocketProcessor worker = createWorker(socket);
+                    log.info("acceptor accepts connection and delegating it to worker thread");
                     workerExecutorService.execute(worker);
                 } catch (IOException exception) {
                     log.warn("fail while accepting socket and allocating it to worker thread");
@@ -121,8 +122,6 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
             HttpProcessor processor = getProcessor();
             try {
                 processor.process(socket);
-            } catch (IOException exception) {
-                log.warn("fail while processing socket");
             } finally {
                 recycleProcessor(processor);
                 try {

@@ -2,6 +2,8 @@ package codesquad.http;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -15,15 +17,16 @@ public class WasRequest {
 
     private String host;
 
+    private MimeTypes contentType;
+
     private HttpHeaders headers;
 
-    private Map<String, String> queryString;
-
-    private Map<String, String> parameters;
+    private Map<String, List<String>> parameters;
 
     private byte[] body;
 
     public WasRequest() {
+        parameters = new HashMap<>();
     }
 
     public WasRequest(HttpMethod method,
@@ -31,15 +34,13 @@ public class WasRequest {
                       String protocol,
                       String host,
                       HttpHeaders headers,
-                      Map<String, String> queryString,
-                      Map<String, String> parameters,
+                      Map<String, List<String>> parameters,
                       byte[] body) {
         this.method = method;
         this.path = path;
         this.protocol = protocol;
         this.host = host;
         this.headers = headers;
-        this.queryString = queryString;
         this.parameters = parameters;
         this.body = body;
     }
@@ -52,17 +53,22 @@ public class WasRequest {
         return headers.getHeader(name);
     }
 
-    public Map<String, String> getQueryString() {
-        return Collections.unmodifiableMap(queryString);
-    }
-
-    public Map<String, String> getParameters() {
+    public Map<String, List<String>> getParameterMap() {
         return Collections.unmodifiableMap(parameters);
     }
 
-    public Optional<String> getParameter(String name) {
-        return Optional.of(parameters.get(name));
+    public List<String> getParameters(String name) {
+        if (parameters.containsKey(name)) {
+            return Collections.unmodifiableList(parameters.get(name));
+        } else {
+            return Collections.emptyList();
+        }
     }
+
+    public Optional<String> getParameter(String name) {
+        return getParameters(name).stream().findFirst();
+    }
+
 
     public String getProtocol() {
         return protocol;
@@ -82,6 +88,10 @@ public class WasRequest {
 
     public byte[] getBody() {
         return body;
+    }
+
+    public MimeTypes getContentType() {
+        return contentType;
     }
 
     public void setMethod(HttpMethod method) {
@@ -104,12 +114,12 @@ public class WasRequest {
         this.headers = headers;
     }
 
-    public void setQueryString(Map<String, String> queryString) {
-        this.queryString = queryString;
+    public void setContentType(MimeTypes contentType) {
+        this.contentType = contentType;
     }
 
-    public void setParameters(Map<String, String> parameters) {
-        this.parameters = parameters;
+    public void addParameters(Map<String, List<String>> parameters) {
+        this.parameters.putAll(parameters);
     }
 
     public void setBody(byte[] body) {
@@ -126,7 +136,6 @@ public class WasRequest {
         sb.append("host='").append(host).append('\'').append(System.lineSeparator());
         sb.append("headers=").append(headers).append(System.lineSeparator());
         sb.append("parameters=").append(parameters).append(System.lineSeparator());
-        sb.append("queryStrings=").append(queryString).append(System.lineSeparator());
         sb.append("body=").append(Arrays.toString(body)).append(System.lineSeparator());
         sb.append("}").append(System.lineSeparator());
         return sb.toString();

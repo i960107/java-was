@@ -1,6 +1,7 @@
 package codesquad.http;
 
 import codesquad.http.exception.HttpProtocolException;
+import codesquad.processor.exception.ProcessorException;
 import codesquad.server.Handler;
 import codesquad.server.HandlerContext;
 import codesquad.server.exception.HandlerException;
@@ -23,42 +24,67 @@ public class HttpProcessor {
         this.handlerContext = handlerContext;
     }
 
-    public void process(Socket socket) throws IOException {
+    public void process(Socket socket) {
         try (
                 BufferedInputStream inputStream = new BufferedInputStream(socket.getInputStream());
                 BufferedOutputStream outputStream = new BufferedOutputStream(socket.getOutputStream());
         ) {
-            WasRequest request = new WasRequest();
-            WasResponse response = new WasResponse(outputStream);
+            WasRequest request;
+            WasResponse response;
+            HttpStatus status = HttpStatus.OK;
+
             try {
-                processRequest(request, inputStream);
-                processResponse(request, response);
+                request = processRequest(inputStream);
             } catch (HttpProtocolException e) {
-                response.sendError(request.getProtocol(), HttpStatus.BAD_REQUEST, HttpHeaders.getDefault());
+                request = new WasRequest();
+                status = HttpStatus.BAD_REQUEST;
             }
+
+            response = new WasResponse(request);
+            processResponse(request, response);
+
+            if (status != HttpStatus.OK) {
+                response.sendError(status, HttpHeaders.getDefault());
+            }
+
+            HttpResponseWriter.write(outputStream, response);
+        } catch (IOException e) {
+            log.warn("io exception occured while processing request : {}", e.getMessage());
         }
     }
 
-    public WasRequest processRequest(WasRequest request, InputStream input) throws IOException {
+    public WasRequest processRequest(InputStream input) throws IOException {
+        WasRequest request = new WasRequest();
         HttpRequestParser.parse(request, input);
+
         log.info(request.toString());
+
         return request;
     }
 
     public void processResponse(WasRequest request, WasResponse response) throws IOException {
-
+        HttpStatus status = HttpStatus.OK;
         try {
             Handler handler = handlerContext.getMappedHandler(request);
 
             handler.handle(request, response);
-
         } catch (HandlerException he) {
-            if (he instanceof MethodNotAllowedException) {
-                response.sendError(request.getProtocol(), HttpStatus.METHOD_NOT_ALLOWED, HttpHeaders.getDefault());
+            if (he.getClass().equals(MethodNotAllowedException.class)) {
+                status = HttpStatus.METHOD_NOT_ALLOWED;
             } else {
-                response.sendError(request.getProtocol(), HttpStatus.NOT_FOUND, HttpHeaders.getDefault());
+                status = HttpStatus.NOT_FOUND;
             }
+        } catch (ProcessorException processorException) {
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+        } catch (Exception exception) {
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
         }
+
+        if (status != HttpStatus.OK) {
+            response.sendError(status, HttpHeaders.getDefault());
+        }
+
+        log.info(response.toString());
     }
 
 }

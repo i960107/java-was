@@ -1,10 +1,10 @@
 package codesquad.http;
 
 import codesquad.util.IOUtil;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public class HttpHeaders {
     public static final String CONTENT_LENGTH_HEADER = "Content-Length";
@@ -21,13 +21,13 @@ public class HttpHeaders {
 
     public static final String ACCEPT = "Accept";
 
-    private final Set<HttpHeader> headers;
+    private final List<HttpHeader> headers;
 
     public HttpHeaders() {
-        this.headers = new HashSet<>();
+        this.headers = new ArrayList<>();
     }
 
-    public HttpHeaders(Set<HttpHeader> headers) {
+    public HttpHeaders(List<HttpHeader> headers) {
         this.headers = headers;
     }
 
@@ -42,16 +42,28 @@ public class HttpHeaders {
         headers.setHeader(HttpHeaders.CONNECTION_HEADER, "close");
     }
 
+    public static HttpHeaders empty() {
+        return new HttpHeaders();
+    }
 
-    public Set<HttpHeader> getHeaders() {
-        return Collections.unmodifiableSet(headers);
+
+    public List<HttpHeader> getHeaders() {
+        return Collections.unmodifiableList(headers);
     }
 
     public Optional<HttpHeader> getHeader(String key) {
         return headers
                 .stream()
                 .filter(header -> header.hasKey(key))
-                .findAny();
+                .findFirst();
+    }
+
+    public Optional<String> getHeaderSingleValue(String key) {
+        Optional<HttpHeader> header = getHeader(key);
+        if(header.isEmpty()){
+            return Optional.empty();
+        }
+        return header.get().getSingleValue();
     }
 
     public boolean contains(String key) {
@@ -59,18 +71,22 @@ public class HttpHeaders {
                 .anyMatch(header -> header.hasKey(key));
     }
 
-    public void setHeader(String name, Set<String> values) {
+    public void setHeader(String name, List<String> values) {
         headers.add(new HttpHeader(name, values));
     }
 
     public void setHeader(String name, String value) {
-        Set<String> values = new HashSet<>();
+        List<String> values = new ArrayList<>();
         values.add(value);
         headers.add(new HttpHeader(name, values));
     }
 
     public void setHeader(HttpHeader header) {
         headers.add(header);
+    }
+
+    public int size(){
+        return headers.size();
     }
 
     @Override
