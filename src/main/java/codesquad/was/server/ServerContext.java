@@ -1,13 +1,15 @@
 package codesquad.was.server;
 
-import codesquad.was.http.HttpStatus;
 import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
+import codesquad.was.http.HttpStatus;
+import codesquad.was.server.authenticator.Authenticator;
+import codesquad.was.server.exception.AuthenticationException;
 import codesquad.was.server.exception.FilterRegistrationException;
 import codesquad.was.server.exception.MalformedPathException;
 import codesquad.was.server.exception.MethodNotAllowedException;
 import codesquad.was.server.exception.ResourceNotFoundException;
-import codesquad.was.server.session.InMemorySessionManager;
+import codesquad.was.server.session.SessionManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,13 +18,15 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HandlerContext {
+public class ServerContext {
 
     private static final String DEFAULT_PATH = "/";
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private final InMemorySessionManager sessionManager;
+    private final SessionManager sessionManager;
+
+    private final Authenticator authenticator;
 
     private final Map<String, Handler> mappings;
 
@@ -31,14 +35,14 @@ public class HandlerContext {
     private final Pattern supportedPathPattern = Pattern.compile("^[\\w\\-./가-힣]*$");
 
 
-    public HandlerContext() {
-        this.sessionManager = new InMemorySessionManager();
+    public ServerContext(
+            SessionManager sessionManager,
+            Authenticator authenticator
+    ) {
+        this.sessionManager = sessionManager;
+        this.authenticator = authenticator;
         mappings = new HashMap<>();
         filters = new ArrayList<>();
-    }
-
-    public InMemorySessionManager getSessionManager() {
-        return sessionManager;
     }
 
     public void addHandler(String path, Handler handler) {
@@ -68,9 +72,11 @@ public class HandlerContext {
 
         try {
             Handler handler = getMappedHandler(request);
+
             filters
                     .forEach(filter -> filter.beforeHandler(request, response));
 
+            log.info("handler mapped : {}", handler.getClass().getName());
             if (request.isGet()) {
                 handler.doGet(request, response);
             } else if (request.isPost()) {
@@ -82,7 +88,9 @@ public class HandlerContext {
         } catch (ResourceNotFoundException e) {
             response.sendError(HttpStatus.NOT_FOUND);
         } catch (MethodNotAllowedException e) {
-            response.sendError(HttpStatus.NOT_MODIFIED);
+            response.sendError(HttpStatus.METHOD_NOT_ALLOWED);
+        } catch (AuthenticationException e) {
+            response.sendError(HttpStatus.UNAUTHORIZED);
         } catch (Exception e) {
             response.sendError(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -91,6 +99,7 @@ public class HandlerContext {
     private Handler getMappedHandler(HttpRequest request) {
         Handler handler;
         if (!mappings.containsKey(request.getPath())) {
+
             handler = mappings.get(DEFAULT_PATH);
         } else {
             handler = mappings.get(request.getPath());
@@ -100,5 +109,13 @@ public class HandlerContext {
             throw new ResourceNotFoundException();
         }
         return handler;
+    }
+
+    public SessionManager getSessionManager() {
+        return sessionManager;
+    }
+
+    public Authenticator getAuthenticator() {
+        return authenticator;
     }
 }

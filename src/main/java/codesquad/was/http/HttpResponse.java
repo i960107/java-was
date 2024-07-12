@@ -1,13 +1,12 @@
 package codesquad.was.http;
 
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 
-public class WasResponse {
+public class HttpResponse {
 
     private static final String DEFAULT_PROTOCOL = "HTTP/1.1";
 
-    private WasRequest request;
+    private HttpRequest request;
 
     private HttpStatus status;
 
@@ -15,10 +14,10 @@ public class WasResponse {
 
     private ByteArrayOutputStream out;
 
-    public WasResponse(WasRequest request) {
+    public HttpResponse(HttpRequest request) {
         this.request = request;
         this.status = HttpStatus.OK;
-        this.headers = HttpHeaders.empty();
+        this.headers = HttpHeaders.getDefault();
         this.out = new ByteArrayOutputStream();
     }
 
@@ -37,20 +36,20 @@ public class WasResponse {
         return headers;
     }
 
-    public OutputStream getOut() {
-        return out;
-    }
-
     public boolean hasBody() {
         return out.size() > 0;
     }
 
-    public WasRequest getRequest() {
+    public HttpRequest getRequest() {
         return request;
     }
 
     public byte[] getOutputBytes() {
         return out.toByteArray();
+    }
+
+    public void setBody(byte[] body) {
+        this.out.writeBytes(body);
     }
 
     public void setStatus(HttpStatus status) {
@@ -67,16 +66,28 @@ public class WasResponse {
         this.headers = headers;
     }
 
+    public void addHeader(HttpHeader header) {
+        this.headers.setHeader(header);
+    }
+
+    public void setCookie(HttpCookie cookie) {
+        addHeader(new HttpHeader(HttpHeaders.SET_COOKIE, cookie.toString()));
+    }
+
+    public void removeCookie(String key) {
+        HttpCookie cookie = new HttpCookie(key, "");
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        addHeader(new HttpHeader(HttpHeaders.SET_COOKIE, cookie.toString()));
+    }
+
     public void sendError(HttpStatus status) {
         setStatus(status);
-        setHeaders(HttpHeaders.getDefault());
     }
 
     public void sendRedirect(String redirectUrl) {
         setStatus(HttpStatus.FOUND);
-        HttpHeaders headers = HttpHeaders.getDefault();
-        headers.setHeader(HttpHeaders.LOCATION, redirectUrl);
-        setHeaders(headers);
+        addHeader(new HttpHeader(HttpHeaders.LOCATION, redirectUrl));
     }
 
     public void send(HttpHeaders headers, byte[] body) {

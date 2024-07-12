@@ -1,11 +1,11 @@
-package codesquad.http;
+package codesquad.was.http;
 
 import static codesquad.was.util.IOUtil.readLine;
 import static codesquad.was.util.IOUtil.readToSize;
 
-import codesquad.http.exception.HeaderSyntaxException;
-import codesquad.http.exception.HttpProtocolException;
-import codesquad.http.exception.NotSupportedHttpMethodException;
+import codesquad.was.http.exception.HeaderSyntaxException;
+import codesquad.was.http.exception.HttpProtocolException;
+import codesquad.was.http.exception.NotSupportedHttpMethodException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -19,25 +19,23 @@ import java.util.Optional;
 // 메서드 호출 순서에 따라서 파싱 결과 달라짐 주의!
 public final class HttpRequestParser {
 
-    private static final String DEFAULT_CHARSET = "UTF-8";
-
     private static final String HEADER_KEY_VALUE_DELIMITER = ":";
 
     private static final String HEADER_VALUES_DELIMITER = ",";
 
-    private static final String COOKIE_DELIMITER = ";";
+    private static final String DEFAULT_CHARSET = "UTF-8";
 
-    public static void parse(WasRequest request, InputStream input) throws IOException {
+    private static final String COOKIES_DELIMITER = ";";
+
+    private static final String COOKIE_KEY_VALUE_DELIMITER = "=";
+
+    public static void parse(HttpRequest request, InputStream input) throws IOException {
+        //--- request line
         String requestLine = parseRequestLine(input);
 
         String[] requestLineParts = splitRequestLine(requestLine);
 
-        HttpMethod method;
-        try {
-            method = HttpMethod.valueOf(requestLineParts[0]);
-        } catch (IllegalArgumentException e) {
-            throw new NotSupportedHttpMethodException();
-        }
+        HttpMethod method = getHttpMethod(requestLineParts[0]);
         request.setMethod(method);
 
         String protocol = requestLineParts[2];
@@ -52,34 +50,31 @@ public final class HttpRequestParser {
             request.addParameters(queryPairs);
         }
 
+        //--- header
         HttpHeaders headers = parseHeaders(input);
-        validateHeader(headers);
-        request.setHeaders(headers);
-        String host = headers.getHeaderSingleValue(HttpHeaders.HOST_HEADER).get();
-        request.setHost(host);
-        headers.getHeaderSingleValue(HttpHeaders.CONTENT_TYPE_HEADER)
-                .ifPresent(value -> {
-                    MimeTypes contentType = MimeTypes.getMimeTypeFromContentType(value);
-                    request.setContentType(contentType);
-                });
+        setRequestHeaders(request, headers);
 
-        List<String> parseCookie ()
-
+        //--- body (Content-Length 헤더 있을때만)
         Optional<String> headerSingleValue = headers.getHeaderSingleValue(HttpHeaders.CONTENT_LENGTH_HEADER);
         if (headerSingleValue.isEmpty()) {
             return;
         }
 
         int contentLength = Integer.parseInt(headerSingleValue.get());
-        if (isFormData(request.getContentType())) {
-            String formData = new String(readToSize(input, contentLength), DEFAULT_CHARSET);
-            Map<String, List<String>> parameters = parseRequestParameters(formData);
-            request.addParameters(parameters);
-        } else {
-            byte[] bytes = parseBody(input, contentLength);
-            request.setBody(bytes);
-        }
+        byte[] body = parseBody(input, contentLength);
+        setRequestBody(request, body);
     }
+
+    private static HttpMethod getHttpMethod(String parsedMethod) {
+        HttpMethod method;
+        try {
+            method = HttpMethod.valueOf(parsedMethod);
+        } catch (IllegalArgumentException e) {
+            throw new NotSupportedHttpMethodException();
+        }
+        return method;
+    }
+
 
     private static String parseRequestLine(InputStream input) throws IOException {
         String requestLine = readLine(input);
@@ -167,6 +162,25 @@ public final class HttpRequestParser {
         return new HttpHeader(key, values);
     }
 
+    private static void setRequestHeaders(HttpRequest request, HttpHeaders headers) {
+
+        validateHeader(headers);
+
+        request.setHeaders(headers);
+
+        String host = headers.getHeaderSingleValue(HttpHeaders.HOST_HEADER).get();
+        request.setHost(host);
+
+        headers.getHeaderSingleValue(HttpHeaders.CONTENT_TYPE_HEADER)
+                .ifPresent(value -> {
+                    MimeTypes contentType = MimeTypes.getMimeTypeFromContentType(value);
+                    request.setContentType(contentType);
+                });
+
+        List<HttpCookie> cookies = parseCookie(headers);
+        request.setCookies(cookies);
+    }
+
 
     private static void validateHeader(HttpHeaders headers) {
         boolean isValid = hasSingleValue(headers, HttpHeaders.HOST_HEADER);
@@ -185,8 +199,36 @@ public final class HttpRequestParser {
 
     }
 
+    private static List<HttpCookie> parseCookie(HttpHeaders headers) {
+        List<HttpCookie> cookies = new ArrayList<>();
+
+        Optional<String> headerSingleValue = headers.getHeaderSingleValue(HttpHeaders.COOKIE);
+        if (headerSingleValue.isEmpty()) {
+            return cookies;
+        }
+
+        String[] tokens = headerSingleValue.get().split(COOKIES_DELIMITER);
+        for (String token : tokens) {
+            int index = token.indexOf(COOKIE_KEY_VALUE_DELIMITER);
+            String key = token.substring(0, index).strip();
+            String value = token.substring(index + 1).strip();
+            cookies.add(new HttpCookie(key, value));
+        }
+        return cookies;
+    }
+
     private static boolean hasSingleValue(HttpHeaders headers, String key) {
         return headers.getHeaderSingleValue(key).isPresent();
+    }
+
+    private static void setRequestBody(HttpRequest request, byte[] body) throws IOException {
+        if (isFormData(request.getContentType())) {
+            String formData = new String(body, DEFAULT_CHARSET);
+            Map<String, List<String>> parameters = parseRequestParameters(formData);
+            request.addParameters(parameters);
+        } else {
+            request.setBody(body);
+        }
     }
 
     private static boolean isFormData(MimeTypes contentType) {
@@ -194,13 +236,11 @@ public final class HttpRequestParser {
                 contentType.equals(MimeTypes.form_data);
     }
 
-
-    private static byte[] parseBody(InputStream input, int contentLength) throws IOException {
-        byte[] body = new byte[contentLength];
-        int read = input.read(body, 0, contentLength);
-        if (read != contentLength || input.available() > 0) {
+    private static byte[] parseBody(InputStream input, int contentLength) {
+        try {
+            return readToSize(input, contentLength);
+        } catch (IOException exception) {
             throw new HttpProtocolException("incomplete body read");
         }
-        return body;
     }
 }

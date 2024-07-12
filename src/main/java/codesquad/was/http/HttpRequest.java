@@ -1,5 +1,10 @@
 package codesquad.was.http;
 
+import codesquad.was.server.ServerContext;
+import codesquad.was.server.authenticator.Principal;
+import codesquad.was.server.session.Session;
+import codesquad.was.server.session.SessionManager;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -7,7 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class WasRequest {
+public class HttpRequest {
+
+    public static final String SESSION_PRINCIPAL_KEY = "principal";
 
     private HttpMethod method;
 
@@ -23,30 +30,47 @@ public class WasRequest {
 
     private Map<String, List<String>> parameters;
 
-    private List<WasCookie> cookies;
+    private List<HttpCookie> cookies;
 
     private byte[] body;
 
-    public WasRequest() {
+    private Session session;
+
+    private Principal principal;
+
+    private ServerContext context;
+
+    private String sessionId;
+
+    public HttpRequest() {
+    }
+
+    public HttpRequest(ServerContext context) {
+        this.context = context;
+        this.cookies = new ArrayList<>();
         parameters = new HashMap<>();
     }
 
-    public WasRequest(HttpMethod method,
-                      String path,
-                      String protocol,
-                      String host,
-                      HttpHeaders headers,
-                      List<WasCookie> cookies,
-                      Map<String, List<String>> parameters,
-                      byte[] body) {
+    public HttpRequest(
+            ServerContext context,
+            HttpMethod method,
+            String path,
+            String protocol,
+            String host,
+            HttpHeaders headers,
+            List<HttpCookie> cookies,
+            Map<String, List<String>> parameters,
+            byte[] body) {
+        this.context = context;
         this.method = method;
         this.path = path;
         this.protocol = protocol;
         this.host = host;
         this.headers = headers;
-        this.cookies = cookies;
-        this.parameters = parameters;
+        this.cookies = cookies == null ? new ArrayList<>() : cookies;
+        this.parameters = parameters == null ? new HashMap<>() : parameters;
         this.body = body;
+
     }
 
     public HttpHeaders getHeaders() {
@@ -82,6 +106,7 @@ public class WasRequest {
         return host;
     }
 
+
     public String getPath() {
         return path;
     }
@@ -98,8 +123,12 @@ public class WasRequest {
         return contentType;
     }
 
-    public List<WasCookie> getCookies() {
+    public List<HttpCookie> getCookies() {
         return cookies.stream().toList();
+    }
+
+    public Principal getPrincipal() {
+        return principal;
     }
 
     public void setMethod(HttpMethod method) {
@@ -126,7 +155,14 @@ public class WasRequest {
         this.contentType = contentType;
     }
 
+    public void setPrincipal(Principal principal) {
+        this.principal = principal;
+    }
+
     public void addParameters(Map<String, List<String>> parameters) {
+        if (this.parameters == null) {
+            this.parameters = new HashMap<>();
+        }
         this.parameters.putAll(parameters);
     }
 
@@ -134,7 +170,7 @@ public class WasRequest {
         this.body = body;
     }
 
-    public void setCookies(List<WasCookie> cookies) {
+    public void setCookies(List<HttpCookie> cookies) {
         this.cookies = cookies;
     }
 
@@ -144,6 +180,89 @@ public class WasRequest {
 
     public boolean isPost() {
         return method == HttpMethod.POST;
+    }
+
+    public Optional<HttpCookie> getCookie(String name) {
+        return cookies.stream().filter(cookie -> cookie.getKey().equals(name)).findFirst();
+    }
+
+    public Session getSession(boolean create) {
+        if (this.session != null) {
+            return session;
+        }
+
+        // sessionId 탐색 순서 1. request.sessionId 2. request.cookie(SID) 3.새로 생성
+        String existingSessionId = sessionId;
+        if (existingSessionId == null) {
+            Optional<HttpCookie> sidCookie = getCookie(HttpHeaders.SID);
+            if (sidCookie.isPresent()) {
+                existingSessionId = sidCookie.get().getValue();
+            }
+        }
+
+        SessionManager sessionManager = context.getSessionManager();
+        if (existingSessionId != null) {
+            sessionManager.getSession(existingSessionId)
+                    .ifPresent(existingSession -> {
+                        this.session = existingSession;
+                        this.sessionId = existingSession.getId();
+                    });
+        }
+        if (session == null && create) {
+            session = sessionManager.createSession();
+            sessionId = session.getId();
+        }
+
+        return session;
+    }
+
+    public boolean isAuthenticated() {
+        return this.principal != null;
+    }
+
+    public void authenticate() {
+        Session session = getSession(false);
+        if (session == null) {
+            return;
+        }
+        session.getAttribute(SESSION_PRINCIPAL_KEY)
+                .ifPresent(principal -> {
+                    this.principal = (Principal) principal;
+                });
+    }
+
+    public void login() {
+        Principal newPrincipal = context.getAuthenticator().authenticate(this);
+        getSession(true).setAttribute(SESSION_PRINCIPAL_KEY, newPrincipal);
+        this.principal = newPrincipal;
+    }
+
+    public String getSessionId() {
+        if (sessionId != null) {
+            return sessionId;
+        }
+
+        sessionId = getSession(true).getId();
+        return sessionId;
+    }
+
+    public void logout() {
+        this.principal = null;
+        Session session = getSession(false);
+        if (session != null) {
+            session.removeAttribute(SESSION_PRINCIPAL_KEY);
+        }
+    }
+
+    public void invalidateSession() {
+        Session existingSession = getSession(false);
+        if (existingSession == null) {
+            return;
+        }
+        SessionManager sessionManager = context.getSessionManager();
+        sessionManager.removeSession(existingSession.getId());
+        this.session = null;
+        this.sessionId = null;
     }
 
     @Override

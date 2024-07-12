@@ -1,20 +1,17 @@
-package codesquad.model;
+package codesquad.application.model;
 
 public class User {
-    private Long id;
-    private String password;
     private String username;
     private String nickname;
+    private String password;
 
     public User() {
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getId() {
-        return id;
+    public User(String username, String nickname, String password) {
+        this.username = username;
+        this.nickname = nickname;
+        this.password = password;
     }
 
     public String getPassword() {
@@ -32,11 +29,11 @@ public class User {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("User{");
-        sb.append("id=").append(id);
         sb.append(", password='").append(password).append('\'');
         sb.append(", username='").append(username).append('\'');
         sb.append(", nickname='").append(nickname).append('\'');
         sb.append('}');
         return sb.toString();
     }
+
 }
