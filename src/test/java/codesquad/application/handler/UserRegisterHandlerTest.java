@@ -1,12 +1,11 @@
-package codesquad.processor;
+package codesquad.application.handler;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static util.TestUtiㅣ.assertRedirectResponse;
-import static util.TestUtiㅣ.post;
+import static util.TestUtil.assertRedirectResponse;
+import static util.TestUtil.post;
 
 import codesquad.application.db.InMemoryUserRepository;
-import codesquad.application.handler.UserRegisterHandler;
 import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
 import codesquad.was.http.HttpStatus;

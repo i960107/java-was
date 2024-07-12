@@ -47,33 +47,37 @@ public class UserListHandler implements Handler {
         html.append("        <a href=\"/\"><img src=\"../img/signiture.svg\"/></a>");
         html.append("        <ul class=\"header__menu\">");
         html.append("            <li class=\"header__menu__item\">");
-        html.append("                <button class=\"btn btn_contained btn_size_s\" style = \"margin-top: 24px\">");
+        html.append("                <a class=\"btn btn_contained btn_size_s\" href=\"/index.html\">");
         html.append(userName);
-        html.append("                </button>");
+        html.append("                </a>");
         html.append("            </li>");
         html.append("            <li class=\"header__menu__item\">");
-        html.append("                <a class=\"btn btn_contained btn_size_s\" href=\"/index.html\">홈</a>");
+        html.append("                <a class=\"btn btn_contained btn_size_s\" href=\"/index.html\">");
+        html.append("홈");
+        html.append("                </a>");
         html.append("            </li>");
         html.append("        </ul>");
         html.append("    </header>");
         html.append("    <div class=\"page\">");
         html.append("        <h2 class=\"page-title\">User List</h2>");
         html.append("        <table class=\"user-table\" border=\"1\">");
+        html.append("            <thead>");
         html.append("            <tr>");
         html.append("                <th>Username</th>");
         html.append("                <th>Nickname</th>");
         html.append("            </tr>");
+        html.append("            </thead>");
+        html.append("            <tbody>");
 
         // 사용자 데이터를 테이블에 추가
         for (User user : users) {
             html.append("            <tr>");
-            html.append("                <td class\"textfield textfield_size_s\">").append(user.getUsername())
-                    .append("</td>");
-            html.append("                <td class =\"text_Field textfield_size_s\">").append(user.getNickname())
-                    .append("</td>");
+            html.append("                <td> ").append(user.getUsername()).append("</td>");
+            html.append("                <td> ").append(user.getNickname()).append("</td>");
             html.append("            </tr");
         }
 
+        html.append("            </tbody>");
         html.append("        </table>");
         html.append("    </div>");
         html.append("</div>");

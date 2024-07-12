@@ -2,9 +2,9 @@ package codesquad.application.handler;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static util.TestUtiㅣ.assertRedirectResponse;
-import static util.TestUtiㅣ.get;
-import static util.TestUtiㅣ.post;
+import static util.TestUtil.assertRedirectResponse;
+import static util.TestUtil.get;
+import static util.TestUtil.post;
 
 import codesquad.application.db.InMemoryUserRepository;
 import codesquad.application.model.User;

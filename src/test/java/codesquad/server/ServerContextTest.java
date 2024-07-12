@@ -3,8 +3,8 @@ package codesquad.server;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static util.TestUtiㅣ.get;
-import static util.TestUtiㅣ.post;
+import static util.TestUtil.get;
+import static util.TestUtil.post;
 
 import codesquad.was.http.HttpHeaders;
 import codesquad.was.http.HttpRequest;
