@@ -3,7 +3,7 @@ package codesquad.application.handler;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static util.TestUtiㅣ.get;
+import static util.TestUtil.get;
 
 import codesquad.was.http.HttpHeaders;
 import codesquad.was.http.HttpRequest;
