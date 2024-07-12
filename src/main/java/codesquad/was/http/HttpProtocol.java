@@ -1,6 +1,6 @@
 package codesquad.http;
 
-import codesquad.server.HandlerContext;
+import codesquad.was.util.server.HandlerContext;
 import codesquad.http.JIoEndpoint.SocketProcessor;
 import java.io.IOException;
 import java.net.Socket;

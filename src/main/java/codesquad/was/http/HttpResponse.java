@@ -1,4 +1,4 @@
-package codesquad.http;
+package codesquad.was.http;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -67,9 +67,9 @@ public class WasResponse {
         this.headers = headers;
     }
 
-    public void sendError(HttpStatus status, HttpHeaders headers) {
+    public void sendError(HttpStatus status) {
         setStatus(status);
-        setHeaders(headers);
+        setHeaders(HttpHeaders.getDefault());
     }
 
     public void sendRedirect(String redirectUrl) {

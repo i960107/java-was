@@ -1,9 +1,10 @@
 package codesquad.http;
 
-import codesquad.util.IOUtil;
+import codesquad.was.util.IOUtil;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class HttpHeaders {
@@ -94,5 +95,22 @@ public class HttpHeaders {
         StringBuilder sb = new StringBuilder();
         headers.forEach(header -> sb.append(header.toString()).append("\n"));
         return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        HttpHeaders headers1 = (HttpHeaders) o;
+        return Objects.equals(headers, headers1.headers);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(headers);
     }
 }

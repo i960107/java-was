@@ -1,4 +1,4 @@
-package codesquad.http;
+package codesquad.was.http;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,6 +23,8 @@ public class WasRequest {
 
     private Map<String, List<String>> parameters;
 
+    private List<WasCookie> cookies;
+
     private byte[] body;
 
     public WasRequest() {
@@ -34,6 +36,7 @@ public class WasRequest {
                       String protocol,
                       String host,
                       HttpHeaders headers,
+                      List<WasCookie> cookies,
                       Map<String, List<String>> parameters,
                       byte[] body) {
         this.method = method;
@@ -41,6 +44,7 @@ public class WasRequest {
         this.protocol = protocol;
         this.host = host;
         this.headers = headers;
+        this.cookies = cookies;
         this.parameters = parameters;
         this.body = body;
     }
@@ -94,6 +98,10 @@ public class WasRequest {
         return contentType;
     }
 
+    public List<WasCookie> getCookies() {
+        return cookies.stream().toList();
+    }
+
     public void setMethod(HttpMethod method) {
         this.method = method;
     }
@@ -126,6 +134,18 @@ public class WasRequest {
         this.body = body;
     }
 
+    public void setCookies(List<WasCookie> cookies) {
+        this.cookies = cookies;
+    }
+
+    public boolean isGet() {
+        return method == HttpMethod.GET;
+    }
+
+    public boolean isPost() {
+        return method == HttpMethod.POST;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -135,9 +155,11 @@ public class WasRequest {
         sb.append("protocol='").append(protocol).append('\'').append(System.lineSeparator());
         sb.append("host='").append(host).append('\'').append(System.lineSeparator());
         sb.append("headers=").append(headers).append(System.lineSeparator());
+        sb.append("cookies=").append(cookies).append(System.lineSeparator());
         sb.append("parameters=").append(parameters).append(System.lineSeparator());
         sb.append("body=").append(Arrays.toString(body)).append(System.lineSeparator());
         sb.append("}").append(System.lineSeparator());
         return sb.toString();
     }
+
 }

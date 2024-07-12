@@ -1,6 +1,7 @@
-package codesquad.db;
+package codesquad.application.db;
 
-import codesquad.model.User;
+import codesquad.application.model.User;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,22 +13,13 @@ public class UserRepository implements Repository<User, Long> {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private static UserRepository INSTANCE;
-
     private AtomicLong seq;
 
     private Map<Long, User> users;
 
-    private UserRepository() {
+    public UserRepository() {
         users = new ConcurrentHashMap<>();
         seq = new AtomicLong(1);
-    }
-
-    public static UserRepository getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new UserRepository();
-        }
-        return INSTANCE;
     }
 
     @Override
@@ -40,5 +32,17 @@ public class UserRepository implements Repository<User, Long> {
     @Override
     public Optional<User> findBy(Long id) {
         return Optional.ofNullable(users.get(id));
+    }
+
+    @Override
+    public List<User> findAll() {
+        return users.values()
+                .stream()
+                .toList();
+    }
+
+    @Override
+    public void deleteAll() {
+        this.users.clear();
     }
 }

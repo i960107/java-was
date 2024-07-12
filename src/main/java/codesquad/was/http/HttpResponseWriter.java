@@ -1,6 +1,6 @@
 package codesquad.http;
 
-import static codesquad.util.IOUtil.writeLine;
+import static codesquad.was.util.IOUtil.writeLine;
 
 import java.io.IOException;
 import java.io.OutputStream;

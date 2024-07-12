@@ -2,10 +2,10 @@ package codesquad.http;
 
 import codesquad.http.exception.HttpProtocolException;
 import codesquad.processor.exception.ProcessorException;
-import codesquad.server.Handler;
-import codesquad.server.HandlerContext;
-import codesquad.server.exception.HandlerException;
-import codesquad.server.exception.MethodNotAllowedException;
+import codesquad.was.util.server.Handler;
+import codesquad.was.util.server.HandlerContext;
+import codesquad.was.util.server.exception.HandlerException;
+import codesquad.was.util.server.exception.MethodNotAllowedException;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;

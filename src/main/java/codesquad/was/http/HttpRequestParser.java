@@ -1,7 +1,7 @@
 package codesquad.http;
 
-import static codesquad.util.IOUtil.readLine;
-import static codesquad.util.IOUtil.readToSize;
+import static codesquad.was.util.IOUtil.readLine;
+import static codesquad.was.util.IOUtil.readToSize;
 
 import codesquad.http.exception.HeaderSyntaxException;
 import codesquad.http.exception.HttpProtocolException;
@@ -20,6 +20,12 @@ import java.util.Optional;
 public final class HttpRequestParser {
 
     private static final String DEFAULT_CHARSET = "UTF-8";
+
+    private static final String HEADER_KEY_VALUE_DELIMITER = ":";
+
+    private static final String HEADER_VALUES_DELIMITER = ",";
+
+    private static final String COOKIE_DELIMITER = ";";
 
     public static void parse(WasRequest request, InputStream input) throws IOException {
         String requestLine = parseRequestLine(input);
@@ -56,6 +62,8 @@ public final class HttpRequestParser {
                     MimeTypes contentType = MimeTypes.getMimeTypeFromContentType(value);
                     request.setContentType(contentType);
                 });
+
+        List<String> parseCookie ()
 
         Optional<String> headerSingleValue = headers.getHeaderSingleValue(HttpHeaders.CONTENT_LENGTH_HEADER);
         if (headerSingleValue.isEmpty()) {
@@ -135,7 +143,7 @@ public final class HttpRequestParser {
         HttpHeaders headers = new HttpHeaders();
         try {
             while (!(headerLine = readLine(input)).isEmpty()) {
-                HttpHeader header = HttpHeader.from(headerLine);
+                HttpHeader header = parseHeader(headerLine);
                 headers.setHeader(header);
             }
         } catch (NullPointerException e) {
@@ -143,6 +151,22 @@ public final class HttpRequestParser {
         }
         return headers;
     }
+
+    public static HttpHeader parseHeader(String headerLine) {
+        String key = headerLine.substring(0, headerLine.indexOf(HEADER_KEY_VALUE_DELIMITER));
+        String[] valuesToken = headerLine
+                .substring(headerLine.indexOf(HEADER_KEY_VALUE_DELIMITER) + 1).strip()
+                .split(HEADER_VALUES_DELIMITER);
+
+        List<String> values = new ArrayList<>();
+        for (String value : valuesToken) {
+            String trimmed = value.trim();
+            values.add(trimmed);
+        }
+
+        return new HttpHeader(key, values);
+    }
+
 
     private static void validateHeader(HttpHeaders headers) {
         boolean isValid = hasSingleValue(headers, HttpHeaders.HOST_HEADER);

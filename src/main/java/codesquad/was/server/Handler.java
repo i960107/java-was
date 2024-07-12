@@ -1,4 +1,4 @@
-package codesquad.server;
+package codesquad.was.util.server;
 
 import codesquad.http.WasRequest;
 import codesquad.http.WasResponse;

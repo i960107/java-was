@@ -1,17 +1,11 @@
 package codesquad.http;
 
 import codesquad.http.exception.HeaderSyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 public class HttpHeader {
-
-    private static final String KEY_VALUE_DELIMITER = ":";
-
-    private static final String VALUES_DELIMITER = ";";
-
     private String key;
 
     private List<String> values;
@@ -21,21 +15,6 @@ public class HttpHeader {
         validateValues(values);
         this.key = key;
         this.values = values;
-    }
-
-    public static HttpHeader from(String headerLine) {
-        String key = headerLine.substring(0, headerLine.indexOf(KEY_VALUE_DELIMITER));
-        String[] valuesToken = headerLine
-                .substring(headerLine.indexOf(KEY_VALUE_DELIMITER) + 1).strip()
-                .split(VALUES_DELIMITER);
-
-        List<String> values = new ArrayList<>();
-        for (String value : valuesToken) {
-            String trimmed = value.trim();
-            values.add(trimmed);
-        }
-
-        return new HttpHeader(key, values);
     }
 
     private void validateKey(String key) {
@@ -78,6 +57,22 @@ public class HttpHeader {
 
 
     @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(key).append(KEY_VALUE_DELIMITER).append(" ");
+
+        int count = 0;
+        int size = values.size();
+        for (String s : values) {
+            sb.append(s);
+            if (++count < size) {
+                sb.append(VALUES_DELIMITER);
+            }
+        }
+        return sb.toString();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -92,21 +87,5 @@ public class HttpHeader {
     @Override
     public int hashCode() {
         return Objects.hash(key, values);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(key).append(KEY_VALUE_DELIMITER).append(" ");
-
-        int count = 0;
-        int size = values.size();
-        for (String s : values) {
-            sb.append(s);
-            if (++count < size) {
-                sb.append(VALUES_DELIMITER);
-            }
-        }
-        return sb.toString();
     }
 }

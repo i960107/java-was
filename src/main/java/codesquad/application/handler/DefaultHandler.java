@@ -1,10 +1,11 @@
-package codesquad.server;
+package codesquad.was.server;
 
-import codesquad.http.HttpHeaders;
-import codesquad.http.MimeTypes;
-import codesquad.http.WasRequest;
-import codesquad.http.WasResponse;
-import codesquad.server.exception.ResourceNotFoundException;
+import codesquad.was.http.HttpHeaders;
+import codesquad.was.http.HttpStatus;
+import codesquad.was.http.MimeTypes;
+import codesquad.was.http.WasRequest;
+import codesquad.was.http.WasResponse;
+import codesquad.was.server.exception.ResourceNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import org.slf4j.Logger;
@@ -18,9 +19,16 @@ public class DefaultHandler implements Handler {
 
 
     @Override
-    public void handle(WasRequest request, WasResponse response) throws IOException {
+    public void doGet(WasRequest request, WasResponse response) {
         InputStream file = getFile(request.getPath());
-        byte[] bytes = file.readAllBytes();
+        byte[] bytes;
+
+        try {
+            bytes = file.readAllBytes();
+        } catch (IOException e) {
+            response.sendError(HttpStatus.INTERNAL_SERVER_ERROR);
+            return;
+        }
 
         HttpHeaders headers = new HttpHeaders();
         HttpHeaders.setCommonHeader(headers);
@@ -28,20 +36,6 @@ public class DefaultHandler implements Handler {
         headers.setHeader(HttpHeaders.CONTENT_TYPE_HEADER, MimeTypes.getMimeTypeFromExtension(request.getPath()));
 
         response.send(headers, bytes);
-    }
-
-    @Override
-    public boolean canHandle(WasRequest request) {
-        return hasSupportedExtension(request.getPath());
-    }
-
-    private boolean hasSupportedExtension(String path) {
-        try {
-            MimeTypes.getMimeTypeFromExtension(path);
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-        return true;
     }
 
     private InputStream getFile(String path) {
