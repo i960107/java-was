@@ -1,6 +1,6 @@
-package codesquad.application.processor.exception;
+package codesquad.application.handler.exception;
 
-public class ModelMappingException extends ProcessorException{
+public class ModelMappingException extends RuntimeException{
     public ModelMappingException(String message) {
         super(message);
     }

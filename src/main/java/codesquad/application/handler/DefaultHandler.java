@@ -1,10 +1,11 @@
-package codesquad.was.server;
+package codesquad.application.handler;
 
 import codesquad.was.http.HttpHeaders;
 import codesquad.was.http.HttpStatus;
 import codesquad.was.http.MimeTypes;
-import codesquad.was.http.WasRequest;
-import codesquad.was.http.WasResponse;
+import codesquad.was.http.HttpRequest;
+import codesquad.was.http.HttpResponse;
+import codesquad.was.server.Handler;
 import codesquad.was.server.exception.ResourceNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,7 +20,7 @@ public class DefaultHandler implements Handler {
 
 
     @Override
-    public void doGet(WasRequest request, WasResponse response) {
+    public void doGet(HttpRequest request, HttpResponse response) {
         InputStream file = getFile(request.getPath());
         byte[] bytes;
 
@@ -39,12 +40,24 @@ public class DefaultHandler implements Handler {
     }
 
     private InputStream getFile(String path) {
-        InputStream resource = getClass().getClassLoader().getResourceAsStream(STATIC_FOLDER + path);
+        if (!isFileName(path)) {
+            throw new ResourceNotFoundException();
+        }
 
+        InputStream resource = getClass().getClassLoader().getResourceAsStream(STATIC_FOLDER + path);
         if (resource == null) {
             throw new ResourceNotFoundException();
         }
 
         return resource;
+    }
+
+    private boolean isFileName(String path) {
+        try {
+            MimeTypes.getMimeTypeFromExtension(path);
+        } catch (IllegalArgumentException exception) {
+            return false;
+        }
+        return true;
     }
 }
