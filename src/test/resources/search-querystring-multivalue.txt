@@ -1,0 +1,5 @@
+GET /search?query=reading&query=novel&size=10 HTTP/1.1
+Host: localhost:8080
+Connection: keep-alive
+Accept: */*
+

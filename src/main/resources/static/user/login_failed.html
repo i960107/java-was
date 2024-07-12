@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link href="../reset.css" rel="stylesheet"/>
+    <link href="../global.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="container">
+    <header class="header">
+        <a href="/"><img src="../img/signiture.svg"/></a>
+        <ul class="header__menu">
+            <li class="header__menu__item">
+                <a class="btn btn_contained btn_size_s" href="/login">로그인</a>
+            </li>
+            <li class="header__menu__item">
+                <a class="btn btn_ghost btn_size_s" href="/registration/index.html">
+                    회원 가입
+                </a>
+            </li>
+        </ul>
+    </header>
+    <div class="page">
+        <h2 class="page-title">로그인 실패</h2>
+        <p class="error-message">아이디 또는 비밀번호가 올바르지 않습니다. 다시 로그인해 주세요.</p>
+        <form class="form" action="/login">
+            <button
+                    id="retry-login-btn"
+                    class="btn btn_contained btn_size_m"
+                    style="margin-top: 24px"
+                    type="submit"
+            >
+                다시 로그인
+            </button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

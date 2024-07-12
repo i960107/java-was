@@ -3,26 +3,50 @@ package codesquad.server;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static util.TestUti.get;
-import static util.TestUti.post;
+import static util.TestUtiㅣ.get;
+import static util.TestUtiㅣ.post;
 
 import codesquad.was.http.HttpHeaders;
-import codesquad.was.http.HttpStatus;
 import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
+import codesquad.was.http.HttpStatus;
 import codesquad.was.server.Handler;
 import codesquad.was.server.ServerContext;
+import codesquad.was.server.authenticator.Authenticator;
+import codesquad.was.server.authenticator.Principal;
+import codesquad.was.server.authenticator.Role;
+import codesquad.was.server.exception.AuthenticationException;
+import codesquad.was.server.session.InMemorySessionManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-class HandlerServerContextTest {
-    private ServerContext handlerServerContext;
+class ServerContextTest {
+    private static String testUsername = "testuser";
+    private static String testPassword = "testpassword1234";
+    private ServerContext context;
 
     @BeforeEach
     public void setUp() {
-        handlerServerContext = new ServerContext();
-        handlerServerContext.addHandler("/test", new Handler() {
+        Authenticator testAuthenticator = new Authenticator() {
+            @Override
+            public Principal authenticate(HttpRequest request) {
+                String username = request.getParameter("username")
+                        .orElseThrow(AuthenticationException::new);
+                String password = request.getParameter("password")
+                        .orElseThrow(AuthenticationException::new);
+                if (username.equals(testUsername) && password.equals(testPassword)) {
+                    throw new AuthenticationException();
+                }
+                return new Principal(username, Role.USER);
+            }
+        };
+        context = new ServerContext(
+                new InMemorySessionManager(),
+                testAuthenticator
+        );
+
+        context.addHandler("/test", new Handler() {
             @Override
             public void doPost(HttpRequest request, HttpResponse response) {
                 response.send(HttpHeaders.empty(), "doPost".getBytes());
@@ -34,16 +58,10 @@ class HandlerServerContextTest {
             }
         });
 
-        handlerServerContext.addHandler("/", new Handler() {
+        context.addHandler("/", new Handler() {
             @Override
             public void doGet(HttpRequest request, HttpResponse response) {
                 response.send(HttpHeaders.empty(), "default".getBytes());
-            }
-        });
-        handlerServerContext.addHandler("/error", new Handler() {
-            @Override
-            public void doGet(HttpRequest request, HttpResponse response) {
-                throw new RuntimeException();
             }
         });
     }
@@ -56,7 +74,7 @@ class HandlerServerContextTest {
         HttpResponse getResponse = new HttpResponse(getRequest);
 
         //when
-        handlerServerContext.handle(getRequest, getResponse);
+        context.handle(getRequest, getResponse);
 
         //then
         assertArrayEquals("doGet".getBytes(), getResponse.getOutputBytes());
@@ -66,7 +84,7 @@ class HandlerServerContextTest {
         HttpResponse postResponse = new HttpResponse(postRequest);
 
         //when
-        handlerServerContext.handle(postRequest, postResponse);
+        context.handle(postRequest, postResponse);
 
         //then
         assertArrayEquals("doPost".getBytes(), postResponse.getOutputBytes());
@@ -80,7 +98,7 @@ class HandlerServerContextTest {
         HttpResponse response = new HttpResponse(request);
 
         //when
-        handlerServerContext.handle(request, response);
+        context.handle(request, response);
 
         //then
         assertArrayEquals("default".getBytes(), response.getOutputBytes());
@@ -89,8 +107,8 @@ class HandlerServerContextTest {
     @DisplayName("기본 경로로 등록된 핸들러가 없다면 등록되지 않은 경로 요청시 404 응답을 반환한다.")
     @Test
     void testUnregisteredPathRequest() {
-        ServerContext emptyHandlerServerContext = new ServerContext();
         //given
+        ServerContext emptyHandlerServerContext = new ServerContext(null, null);
         HttpRequest request = get("/create-user");
         HttpResponse response = new HttpResponse(request);
 
@@ -109,7 +127,7 @@ class HandlerServerContextTest {
         HttpResponse response = new HttpResponse(request);
 
         //when
-        handlerServerContext.handle(request, response);
+        context.handle(request, response);
 
         //then
         assertEquals(HttpStatus.METHOD_NOT_ALLOWED, response.getStatus());
@@ -119,11 +137,19 @@ class HandlerServerContextTest {
     @Test
     void testExceptionReturn500() {
         //given
-        HttpRequest request = post("/error", null, null);
+        ServerContext errorContext = new ServerContext(null, null);
+        errorContext.addHandler("/error", new Handler() {
+            @Override
+            public void doGet(HttpRequest request, HttpResponse response) {
+                throw new RuntimeException();
+            }
+        });
+
+        HttpRequest request = get("/error");
         HttpResponse response = new HttpResponse(request);
 
         //when
-        handlerServerContext.handle(request, response);
+        errorContext.handle(request, response);
 
         //then
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatus());
