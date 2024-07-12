@@ -1,12 +1,16 @@
-package codesquad.was.util.server;
+package codesquad.was.server;
 
-import codesquad.http.WasRequest;
-import codesquad.http.WasResponse;
-import java.io.IOException;
+import codesquad.was.http.HttpRequest;
+import codesquad.was.http.HttpResponse;
+import codesquad.was.server.exception.MethodNotAllowedException;
 
 public interface Handler {
 
-    void handle(WasRequest request, WasResponse response) throws IOException;
+    default void doGet(HttpRequest request, HttpResponse response) {
+        throw new MethodNotAllowedException();
+    }
 
-    boolean canHandle(WasRequest request);
+    default void doPost(HttpRequest request, HttpResponse response) {
+        throw new MethodNotAllowedException();
+    }
 }

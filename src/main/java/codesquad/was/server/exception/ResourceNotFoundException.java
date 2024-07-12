@@ -1,4 +1,4 @@
 package codesquad.was.server.exception;
 
-public class ResourceNotFoundException extends HandlerException {
+public class ResourceNotFoundException extends ServerException {
 }

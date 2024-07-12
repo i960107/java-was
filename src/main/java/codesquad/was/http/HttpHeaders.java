@@ -1,4 +1,4 @@
-package codesquad.http;
+package codesquad.was.http;
 
 import codesquad.was.util.IOUtil;
 import java.util.ArrayList;
@@ -21,6 +21,12 @@ public class HttpHeaders {
     public static final String LOCATION = "Location";
 
     public static final String ACCEPT = "Accept";
+
+    public static final String SET_COOKIE = "Set-Cookie";
+
+    public static final String COOKIE = "Cookie";
+
+    public static final String SID = "SID";
 
     private final List<HttpHeader> headers;
 
@@ -61,7 +67,7 @@ public class HttpHeaders {
 
     public Optional<String> getHeaderSingleValue(String key) {
         Optional<HttpHeader> header = getHeader(key);
-        if(header.isEmpty()){
+        if (header.isEmpty()) {
             return Optional.empty();
         }
         return header.get().getSingleValue();
@@ -86,14 +92,14 @@ public class HttpHeaders {
         headers.add(header);
     }
 
-    public int size(){
+    public int size() {
         return headers.size();
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        headers.forEach(header -> sb.append(header.toString()).append("\n"));
+        headers.forEach(header -> sb.append("\n").append(header.toString()));
         return sb.toString();
     }
 

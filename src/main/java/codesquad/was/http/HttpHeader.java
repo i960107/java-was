@@ -1,11 +1,17 @@
-package codesquad.http;
+package codesquad.was.http;
 
-import codesquad.http.exception.HeaderSyntaxException;
+import codesquad.was.http.exception.HeaderSyntaxException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 public class HttpHeader {
+
+    private static final String HEADER_KEY_VALUE_DELIMITER = ":";
+
+    private static final String HEADER_VALUES_DELIMITER = ",";
+
     private String key;
 
     private List<String> values;
@@ -15,6 +21,14 @@ public class HttpHeader {
         validateValues(values);
         this.key = key;
         this.values = values;
+    }
+
+    public HttpHeader(String key, String value) {
+        List<String> valuesList = Arrays.asList(value);
+        validateKey(key);
+        validateValues(valuesList);
+        this.key = key;
+        this.values = valuesList;
     }
 
     private void validateKey(String key) {
@@ -52,21 +66,22 @@ public class HttpHeader {
     }
 
     public boolean hasKey(String key) {
-        return this.key.equals(key);
+        return this.key.equalsIgnoreCase(key);
     }
 
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(key).append(KEY_VALUE_DELIMITER).append(" ");
+        sb.append(key).append(HEADER_KEY_VALUE_DELIMITER).append(" ");
 
         int count = 0;
         int size = values.size();
         for (String s : values) {
             sb.append(s);
             if (++count < size) {
-                sb.append(VALUES_DELIMITER);
+                sb.append(HEADER_VALUES_DELIMITER);
+                sb.append(" ");
             }
         }
         return sb.toString();

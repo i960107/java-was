@@ -1,11 +1,7 @@
-package codesquad.http;
+package codesquad.was.http;
 
-import codesquad.http.exception.HttpProtocolException;
-import codesquad.processor.exception.ProcessorException;
-import codesquad.was.util.server.Handler;
-import codesquad.was.util.server.HandlerContext;
-import codesquad.was.util.server.exception.HandlerException;
-import codesquad.was.util.server.exception.MethodNotAllowedException;
+import codesquad.was.http.exception.HttpProtocolException;
+import codesquad.was.server.ServerContext;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -18,10 +14,10 @@ public class HttpProcessor {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private final HandlerContext handlerContext;
+    private final ServerContext context;
 
-    public HttpProcessor(HandlerContext handlerContext) {
-        this.handlerContext = handlerContext;
+    public HttpProcessor(ServerContext context) {
+        this.context = context;
     }
 
     public void process(Socket socket) {
@@ -29,23 +25,19 @@ public class HttpProcessor {
                 BufferedInputStream inputStream = new BufferedInputStream(socket.getInputStream());
                 BufferedOutputStream outputStream = new BufferedOutputStream(socket.getOutputStream());
         ) {
-            WasRequest request;
-            WasResponse response;
-            HttpStatus status = HttpStatus.OK;
+            HttpRequest request;
 
             try {
                 request = processRequest(inputStream);
             } catch (HttpProtocolException e) {
-                request = new WasRequest();
-                status = HttpStatus.BAD_REQUEST;
+                log.warn("error parsing http request : {}, {} ", e.getClass(), e.getMessage());
+                writeErrorResponse(outputStream);
+                return;
             }
 
-            response = new WasResponse(request);
+            HttpResponse response = new HttpResponse(request);
+
             processResponse(request, response);
-
-            if (status != HttpStatus.OK) {
-                response.sendError(status, HttpHeaders.getDefault());
-            }
 
             HttpResponseWriter.write(outputStream, response);
         } catch (IOException e) {
@@ -53,8 +45,8 @@ public class HttpProcessor {
         }
     }
 
-    public WasRequest processRequest(InputStream input) throws IOException {
-        WasRequest request = new WasRequest();
+    public HttpRequest processRequest(InputStream input) throws IOException {
+        HttpRequest request = new HttpRequest(context);
         HttpRequestParser.parse(request, input);
 
         log.info(request.toString());
@@ -62,29 +54,16 @@ public class HttpProcessor {
         return request;
     }
 
-    public void processResponse(WasRequest request, WasResponse response) throws IOException {
-        HttpStatus status = HttpStatus.OK;
-        try {
-            Handler handler = handlerContext.getMappedHandler(request);
-
-            handler.handle(request, response);
-        } catch (HandlerException he) {
-            if (he.getClass().equals(MethodNotAllowedException.class)) {
-                status = HttpStatus.METHOD_NOT_ALLOWED;
-            } else {
-                status = HttpStatus.NOT_FOUND;
-            }
-        } catch (ProcessorException processorException) {
-            status = HttpStatus.INTERNAL_SERVER_ERROR;
-        } catch (Exception exception) {
-            status = HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-
-        if (status != HttpStatus.OK) {
-            response.sendError(status, HttpHeaders.getDefault());
-        }
+    public void processResponse(HttpRequest request, HttpResponse response) throws IOException {
+        context.handle(request, response);
 
         log.info(response.toString());
+    }
+
+    private static void writeErrorResponse(BufferedOutputStream outputStream) throws IOException {
+        HttpResponse errorResponse = new HttpResponse(null);
+        errorResponse.sendError(HttpStatus.BAD_REQUEST);
+        HttpResponseWriter.write(outputStream, errorResponse);
     }
 
 }

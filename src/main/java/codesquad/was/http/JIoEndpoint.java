@@ -1,6 +1,6 @@
-package codesquad.http;
+package codesquad.was.http;
 
-import codesquad.http.JIoEndpoint.SocketProcessor;
+import codesquad.was.http.JIoEndpoint.SocketProcessor;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;

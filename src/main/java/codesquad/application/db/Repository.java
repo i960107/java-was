@@ -1,4 +1,4 @@
-package codesquad.db;
+package codesquad.application.db;
 
 import java.util.List;
 import java.util.Optional;

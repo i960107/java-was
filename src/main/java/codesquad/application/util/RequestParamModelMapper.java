@@ -1,7 +1,6 @@
-package codesquad.was.server;
+package codesquad.application.util;
 
 import codesquad.application.handler.exception.ModelMappingException;
-import codesquad.application.handler.exception.ProcessorException;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -11,7 +10,7 @@ import java.util.Map;
 
 public class RequestParamModelMapper {
 
-    public static <T> T map(Map<String, List<String>> requestParameters, Class<T> type) throws ProcessorException {
+    public static <T> T map(Map<String, List<String>> requestParameters, Class<T> type) {
         try {
             T model = type.getDeclaredConstructor().newInstance();
 
@@ -21,6 +20,7 @@ public class RequestParamModelMapper {
                 }
                 List<String> values = requestParameters.get(field.getName());
                 field.setAccessible(true);
+
                 if (List.class.isAssignableFrom(field.getType())) {
                     Type genericType = ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
                     List<Object> convertedValues = new ArrayList<>();

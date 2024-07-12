@@ -1,7 +1,7 @@
-package codesquad.http;
+package codesquad.was.http;
 
-import codesquad.was.util.server.HandlerContext;
-import codesquad.http.JIoEndpoint.SocketProcessor;
+import codesquad.was.server.ServerContext;
+import codesquad.was.http.JIoEndpoint.SocketProcessor;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.Executors;
@@ -11,7 +11,7 @@ public class HttpProtocol {
 
     private final Endpoint<Socket, SocketProcessor> endpoint;
 
-    public HttpProtocol(HandlerContext handlerContext) {
+    public HttpProtocol(ServerContext handlerServerContext) {
         NamedThreadFactory acceptorThreadFactory = new NamedThreadFactory("http-bio-acceptor");
         NamedThreadFactory workerThreadFactory = new NamedThreadFactory(namePrefix);
 
@@ -21,7 +21,7 @@ public class HttpProtocol {
                 workerThreadCount * 2,
                 Executors.newSingleThreadExecutor(acceptorThreadFactory),
                 Executors.newFixedThreadPool(calculateOptimalThreads(), workerThreadFactory),
-                () -> new HttpProcessor(handlerContext)
+                () -> new HttpProcessor(handlerServerContext)
         );
     }
 

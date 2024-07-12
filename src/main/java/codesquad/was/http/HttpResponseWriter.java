@@ -1,4 +1,4 @@
-package codesquad.http;
+package codesquad.was.http;
 
 import static codesquad.was.util.IOUtil.writeLine;
 
@@ -29,7 +29,7 @@ public final class HttpResponseWriter {
         out.write(data);
     }
 
-    public static void write(OutputStream out, WasResponse response) throws IOException {
+    public static void write(OutputStream out, HttpResponse response) throws IOException {
         writeStatusLine(out, response.getProtocol(), response.getStatus());
         writeHeaders(out, response.getHeaders());
         if (response.hasBody()) {

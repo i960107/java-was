@@ -1,4 +1,4 @@
-package codesquad.http.exception;
+package codesquad.was.http.exception;
 
 public class HttpProtocolException extends RuntimeException {
     public HttpProtocolException() {}
