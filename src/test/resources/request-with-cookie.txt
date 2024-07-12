@@ -1,0 +1,26 @@
+GET / HTTP/1.1
+Host: www.google.com
+accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+accept-language: ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7
+cache-control: max-age=0
+cookie: AEC=AVYB7cqQ9dN96UvMh5KTUbIObzmkbh5k51me9pLSomAQrxdjATp8nkhHwj8; NID=515=UTcxX4Jmphp_IUN3RkUSOeqetoRzcgE6j_qh9WmOo7N0h3ofZfFKxgNn7XNf_nHLDXu478Lg5naOaQynLID7ID_4w4GCBkdT0DGeZqV7cPzayq7apAxOWURKJ4BlWnDS6U3q17pch6PqVUe7vdK7t9y7-QnjufEdi5LqsRwXu5h5hXajlrvHcdc; OGPC=19037049-1:; OGP=-19037049:
+dnt: 1
+priority: u=0, i
+sec-ch-ua: "Not/A)Brand";v="8", "Chromium";v="126"
+sec-ch-ua-arch: "x86"
+sec-ch-ua-bitness: "64"
+sec-ch-ua-full-version: "126.0.6478.127"
+sec-ch-ua-full-version-list: "Not/A)Brand";v="8.0.0.0", "Chromium";v="126.0.6478.127"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-model: ""
+sec-ch-ua-platform: "macOS"
+sec-ch-ua-platform-version: "14.5.0"
+sec-ch-ua-wow64: ?0
+sec-fetch-dest: document
+sec-fetch-mode: navigate
+sec-fetch-site: same-origin
+sec-fetch-user: ?1
+upgrade-insecure-requests: 1
+user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36
+x-client-data: CI7aygE=
+
