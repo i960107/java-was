@@ -1,7 +1,6 @@
 package codesquad;
 
 import codesquad.application.db.InMemoryUserRepository;
-import codesquad.application.handler.DefaultHandler;
 import codesquad.application.handler.IndexHandler;
 import codesquad.application.handler.UserListHandler;
 import codesquad.application.handler.UserLoginHandler;
@@ -9,6 +8,7 @@ import codesquad.application.handler.UserLogoutHandler;
 import codesquad.application.handler.UserRegisterHandler;
 import codesquad.was.http.HttpProtocol;
 import codesquad.was.server.ServerContext;
+import codesquad.was.server.DefaultHandler;
 import codesquad.was.server.authenticator.DefaultAuthenticator;
 import codesquad.was.server.session.InMemorySessionManager;
 import java.io.IOException;

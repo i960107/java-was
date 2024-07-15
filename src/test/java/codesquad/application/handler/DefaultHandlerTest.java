@@ -8,6 +8,7 @@ import static util.TestUtil.get;
 import codesquad.was.http.HttpHeaders;
 import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
+import codesquad.was.server.DefaultHandler;
 import codesquad.was.server.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;

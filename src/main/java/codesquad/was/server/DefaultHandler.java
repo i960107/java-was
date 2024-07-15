@@ -1,11 +1,10 @@
-package codesquad.application.handler;
+package codesquad.was.server;
 
 import codesquad.was.http.HttpHeaders;
 import codesquad.was.http.HttpStatus;
 import codesquad.was.http.MimeTypes;
 import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
-import codesquad.was.server.Handler;
 import codesquad.was.server.exception.ResourceNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
