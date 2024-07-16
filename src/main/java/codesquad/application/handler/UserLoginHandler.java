@@ -1,13 +1,14 @@
 package codesquad.application.handler;
 
+import codesquad.was.http.HttpCookie;
 import codesquad.was.http.HttpHeaders;
 import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
-import codesquad.was.http.HttpCookie;
 import codesquad.was.server.Handler;
 import codesquad.was.server.exception.AuthenticationException;
 
-public class UserLoginHandler implements Handler {
+public class UserLoginHandler extends Handler {
+
     @Override
     public void doPost(HttpRequest request, HttpResponse response) {
         try {

@@ -43,7 +43,9 @@ class UserLoginHandlerTest {
         userRepository = new InMemoryUserRepository();
         ServerContext context = new ServerContext(
                 sessionManager,
-                new DefaultAuthenticator(userRepository));
+                new DefaultAuthenticator(userRepository),
+                null
+        );
         serverContext = context;
         handler = new UserLoginHandler();
         context.addHandler("/login", handler);

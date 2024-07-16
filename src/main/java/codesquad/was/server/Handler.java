@@ -4,13 +4,25 @@ import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
 import codesquad.was.server.exception.MethodNotAllowedException;
 
-public interface Handler {
+public abstract class Handler {
+    private ServerContext serverContext;
 
-    default void doGet(HttpRequest request, HttpResponse response) {
+    protected Handler() {
+    }
+
+    public void setServerContext(ServerContext serverContext) {
+        this.serverContext = serverContext;
+    }
+
+    public ServerContext getServerContext() {
+        return serverContext;
+    }
+
+    public void doGet(HttpRequest request, HttpResponse response) {
         throw new MethodNotAllowedException();
     }
 
-    default void doPost(HttpRequest request, HttpResponse response) {
+    public void doPost(HttpRequest request, HttpResponse response) {
         throw new MethodNotAllowedException();
     }
 }

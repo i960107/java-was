@@ -10,7 +10,8 @@ import codesquad.was.http.MimeTypes;
 import codesquad.was.server.Handler;
 import java.util.List;
 
-public class UserListHandler implements Handler {
+public class UserListHandler extends Handler {
+
     private InMemoryUserRepository userRepository;
 
     public UserListHandler(InMemoryUserRepository userRepository) {

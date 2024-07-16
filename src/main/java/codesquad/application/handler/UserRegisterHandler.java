@@ -10,7 +10,7 @@ import codesquad.was.server.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class UserRegisterHandler implements Handler {
+public class UserRegisterHandler extends Handler {
 
     private Logger log = LoggerFactory.getLogger(getClass());
 

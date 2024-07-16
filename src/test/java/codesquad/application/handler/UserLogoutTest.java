@@ -47,7 +47,9 @@ class UserLogoutTest {
         userRepository = new InMemoryUserRepository();
         ServerContext context = new ServerContext(
                 sessionManager,
-                new DefaultAuthenticator(userRepository));
+                new DefaultAuthenticator(userRepository),
+                null
+                );
         serverContext = context;
         handler = new UserLogoutHandler();
         context.addHandler(path, handler);

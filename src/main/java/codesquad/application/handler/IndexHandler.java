@@ -7,7 +7,7 @@ import codesquad.was.http.HttpResponse;
 import codesquad.was.http.MimeTypes;
 import codesquad.was.server.Handler;
 
-public class IndexHandler implements Handler {
+public class IndexHandler extends Handler {
     @Override
     public void doGet(HttpRequest request, HttpResponse response) {
         request.authenticate();

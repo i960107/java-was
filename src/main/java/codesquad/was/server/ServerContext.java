@@ -1,5 +1,6 @@
 package codesquad.was.server;
 
+import codesquad.was.dbcp.ConnectionPool;
 import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
 import codesquad.was.http.HttpStatus;
@@ -30,17 +31,20 @@ public class ServerContext {
 
     private final Map<String, Handler> mappings;
 
-    private final List<Filter> filters;
-
     private final Pattern supportedPathPattern = Pattern.compile("^[\\w\\-./가-힣]*$");
 
+    private final List<Filter> filters;
+
+    private final ConnectionPool connectionPool;
 
     public ServerContext(
             SessionManager sessionManager,
-            Authenticator authenticator
+            Authenticator authenticator,
+            ConnectionPool connectionPool
     ) {
         this.sessionManager = sessionManager;
         this.authenticator = authenticator;
+        this.connectionPool = connectionPool;
         mappings = new HashMap<>();
         filters = new ArrayList<>();
     }
@@ -53,6 +57,7 @@ public class ServerContext {
             log.warn("fail to register handler : null");
             throw new FilterRegistrationException();
         }
+        handler.setServerContext(this);
         this.mappings.put(path, handler);
     }
 

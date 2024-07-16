@@ -11,12 +11,11 @@ import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultHandler implements Handler {
+public class DefaultHandler extends Handler {
 
     private static final String STATIC_FOLDER = "static";
 
     private final Logger log = LoggerFactory.getLogger(getClass());
-
 
     @Override
     public void doGet(HttpRequest request, HttpResponse response) {

@@ -43,7 +43,8 @@ class ServerContextTest {
         };
         context = new ServerContext(
                 new InMemorySessionManager(),
-                testAuthenticator
+                testAuthenticator,
+                null
         );
 
         context.addHandler("/test", new Handler() {
@@ -108,7 +109,7 @@ class ServerContextTest {
     @Test
     void testUnregisteredPathRequest() {
         //given
-        ServerContext emptyHandlerServerContext = new ServerContext(null, null);
+        ServerContext emptyHandlerServerContext = new ServerContext(null, null, null);
         HttpRequest request = get("/create-user");
         HttpResponse response = new HttpResponse(request);
 
@@ -137,7 +138,7 @@ class ServerContextTest {
     @Test
     void testExceptionReturn500() {
         //given
-        ServerContext errorContext = new ServerContext(null, null);
+        ServerContext errorContext = new ServerContext(null, null, null);
         errorContext.addHandler("/error", new Handler() {
             @Override
             public void doGet(HttpRequest request, HttpResponse response) {
