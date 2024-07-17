@@ -4,8 +4,10 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static util.TestUtil.assertRedirectResponse;
 import static util.TestUtil.post;
+import static util.TestUtil.setUpDbAndJdbcTemplate;
 
-import codesquad.application.db.InMemoryUserRepository;
+import codesquad.application.db.JdbcTemplate;
+import codesquad.application.db.UserDao;
 import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
 import codesquad.was.http.HttpStatus;
@@ -18,18 +20,21 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 class UserRegisterHandlerTest {
-    private static InMemoryUserRepository inMemoryUserRepository;
+
+    private static UserDao userDao;
+
     private static UserRegisterHandler userRegisterHandler;
 
     @BeforeAll
     static void beforeAll() {
-        inMemoryUserRepository = new InMemoryUserRepository();
-        userRegisterHandler = new UserRegisterHandler(inMemoryUserRepository);
+        JdbcTemplate jdbcTemplate = setUpDbAndJdbcTemplate();
+        userDao = new UserDao(jdbcTemplate);
+        userRegisterHandler = new UserRegisterHandler(userDao);
     }
 
     @BeforeEach
     void setUp() {
-        inMemoryUserRepository.deleteAll();
+        userDao.deleteAll();
     }
 
     @Test
@@ -48,8 +53,8 @@ class UserRegisterHandlerTest {
         userRegisterHandler.doPost(request, response);
 
         //then
-        assertEquals(1, inMemoryUserRepository.findAll().size());
-        assertThat(inMemoryUserRepository.findAll().get(0))
+        assertEquals(1, userDao.findAll().size());
+        assertThat(userDao.findAll().get(0))
                 .hasNoNullFieldsOrProperties()
                 .hasFieldOrPropertyWithValue("username", "iwer")
                 .hasFieldOrPropertyWithValue("nickname", "박재성")
