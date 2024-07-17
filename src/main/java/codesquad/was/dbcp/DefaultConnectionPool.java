@@ -57,7 +57,7 @@ public class DefaultConnectionPool implements ConnectionPool {
             log.warn("connection creation error : {}", exception.getMessage());
         }
         this.currentPoolSize = new AtomicInteger(minIdle);
-
+        log.info("Connection pool created, current pool size: " + currentPoolSize.get());
         startIdleTimeoutHandler();
     }
 
@@ -67,6 +67,9 @@ public class DefaultConnectionPool implements ConnectionPool {
                 try {
                     TimeUnit.MILLISECONDS.sleep(idleTimeout / 2);
                     for (PooledConnection conn : pool) {
+                        if (currentPoolSize.get() <= minIdle) {
+                            break;
+                        }
                         long now = System.nanoTime();
                         if (now - conn.getLastUsed() > idleTimeout) {
                             if (pool.remove(conn)) {
@@ -128,6 +131,10 @@ public class DefaultConnectionPool implements ConnectionPool {
             } catch (SQLException e) {
             }
         }
+    }
+
+    public int getCurrentPoolSize() {
+        return currentPoolSize.get();
     }
 
     @Override
