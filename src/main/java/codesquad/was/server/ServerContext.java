@@ -13,17 +13,12 @@ import codesquad.was.server.exception.MalformedPathException;
 import codesquad.was.server.exception.MethodNotAllowedException;
 import codesquad.was.server.exception.ResourceNotFoundException;
 import codesquad.was.server.session.SessionManager;
-import codesquad.was.util.IOUtil;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-import org.h2.tools.RunScript;
 import org.h2.tools.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,12 +75,6 @@ public class ServerContext {
                 log.info("h2 console started");
             } catch (SQLException exception) {
             }
-        }
-        try (Connection conn = pool.getConnection();
-             InputStreamReader reader = new InputStreamReader(IOUtil.getClassPathResource("init.sql"))) {
-            RunScript.execute(conn, reader);
-        } catch (SQLException | IOException e) {
-            log.warn("fail to execute init.sql ");
         }
         return pool;
     }
