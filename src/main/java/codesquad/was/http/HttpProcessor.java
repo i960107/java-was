@@ -36,10 +36,9 @@ public class HttpProcessor {
             }
 
             HttpResponse response = new HttpResponse(request);
-
             processResponse(request, response);
-
             HttpResponseWriter.write(outputStream, response);
+
         } catch (IOException e) {
             log.warn("io exception occured while processing request : {}", e.getMessage());
         }
