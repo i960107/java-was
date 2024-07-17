@@ -26,11 +26,14 @@ public class DefaultAuthenticator implements Authenticator {
                 .orElseThrow(AuthenticationException::new);
         String password = request.getParameter("password")
                 .orElseThrow(AuthenticationException::new);
+
         Optional<Principal> principal = userAuthBase.auth(username, password);
+
         if (principal.isEmpty()) {
             log.info("authenticate failed  : {} / {}", username, password);
             throw new AuthenticationException();
         }
+
         log.info("authenticate success  : {} / {}", username, password);
         return principal.get();
     }
