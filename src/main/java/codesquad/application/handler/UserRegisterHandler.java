@@ -1,6 +1,6 @@
 package codesquad.application.handler;
 
-import codesquad.application.db.InMemoryUserRepository;
+import codesquad.application.db.UserDao;
 import codesquad.application.model.User;
 import codesquad.application.util.RequestParamModelMapper;
 import codesquad.was.http.HttpRequest;
@@ -14,10 +14,10 @@ public class UserRegisterHandler extends Handler {
 
     private Logger log = LoggerFactory.getLogger(getClass());
 
-    private final InMemoryUserRepository userRepository;
+    private final UserDao userDao;
 
-    public UserRegisterHandler(InMemoryUserRepository userRepository) {
-        this.userRepository = userRepository;
+    public UserRegisterHandler(UserDao userDao) {
+        this.userDao = userDao;
     }
 
     @Override
@@ -27,8 +27,8 @@ public class UserRegisterHandler extends Handler {
             response.sendError(HttpStatus.BAD_REQUEST);
             return;
         }
+        userDao.save(user);
         log.info("new user : ", user);
-        userRepository.save(user);
         response.sendRedirect("/index.html");
     }
 

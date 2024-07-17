@@ -1,6 +1,6 @@
 package codesquad.application.handler;
 
-import codesquad.application.db.InMemoryUserRepository;
+import codesquad.application.db.UserDao;
 import codesquad.application.model.User;
 import codesquad.was.http.HttpHeader;
 import codesquad.was.http.HttpHeaders;
@@ -12,10 +12,10 @@ import java.util.List;
 
 public class UserListHandler extends Handler {
 
-    private InMemoryUserRepository userRepository;
+    private UserDao userDao;
 
-    public UserListHandler(InMemoryUserRepository userRepository) {
-        this.userRepository = userRepository;
+    public UserListHandler(UserDao userDao) {
+        this.userDao = userDao;
     }
 
     @Override
@@ -28,7 +28,7 @@ public class UserListHandler extends Handler {
             headers.setHeader(new HttpHeader(HttpHeaders.CONTENT_TYPE_HEADER, MimeTypes.html.getMIMEType()));
             response.send(
                     headers,
-                    createHtml(request.getPrincipal().getUsername(), userRepository.findAll()).getBytes());
+                    createHtml(request.getPrincipal().getUsername(), userDao.findAll()).getBytes());
         }
     }
 
