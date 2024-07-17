@@ -1,8 +1,9 @@
 package codesquad.application.db;
 
 import codesquad.was.server.exception.ServerException;
-import java.io.FileInputStream;
+import codesquad.was.util.IOUtil;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,18 +34,18 @@ public class DBConfig {
     }
 
     public static DBConfig getDBConfig(String fileName) {
-        try (FileInputStream fis = new FileInputStream(fileName)) {
+        try (InputStream inputStream = IOUtil.getClassPathResource("application.properties")) {
             Properties properties = new Properties();
-            properties.load(fis);
+            properties.load(inputStream);
             return new DBConfig(
-                    properties.getProperty("url"),
-                    properties.getProperty("username"),
-                    properties.getProperty("password"),
-                    properties.getProperty("driverClassName"),
-                    Integer.parseInt(properties.getProperty("minIdle")),
-                    Integer.parseInt(properties.getProperty("maxPoolSize")),
-                    Integer.parseInt(properties.getProperty("connectionTimeout")),
-                    Integer.parseInt(properties.getProperty("idleTimeout"))
+                    properties.getProperty("db.url"),
+                    properties.getProperty("db.username"),
+                    properties.getProperty("db.password"),
+                    properties.getProperty("db.driverClassName"),
+                    Integer.parseInt(properties.getProperty("db.minIdle")),
+                    Integer.parseInt(properties.getProperty("db.maxPoolSize")),
+                    Integer.parseInt(properties.getProperty("db.connectionTimeout")),
+                    Integer.parseInt(properties.getProperty("db.idleTimeout"))
             );
         } catch (IOException e) {
             log.warn("fail to read dbconfig from {} ", fileName);
