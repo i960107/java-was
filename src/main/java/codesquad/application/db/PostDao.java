@@ -1,6 +1,7 @@
 package codesquad.application.db;
 
 import codesquad.application.model.Post;
+import codesquad.application.model.PostDetailsDto;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -11,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 public class PostDao {
 
-    private static final String INSERT_SQL = "INSERT INTO `post`(user_id, content, created_at) VALUES(?, ?, ?)";
+    private static final String INSERT_SQL = "INSERT INTO `post`(user_id, title, content, created_at) VALUES(?, ?, ?, ?)";
 
     private static final String FIND_BY_ID_SQL = "SELECT * FROM `post` where id = ?";
 
@@ -19,15 +20,22 @@ public class PostDao {
 
     private static final String DELETE_ALL_SQL = "DELETE FROM `post`";
 
+    private static final String FIND_ALL_POST_WITH_DETAIL_SQL =
+            "SELECT p.id, title, content, u.id as userId, nickname, p.created_at "
+                    + "FROM `post` p JOIN `user` u ON p.user_id = u.id ORDER BY p.created_at DESC";
+
     private final Logger log = LoggerFactory.getLogger(getClass());
 
     private final JdbcTemplate jdbcTemplate;
 
     private final PostRowMapper postRowMapper;
 
+    private final PostDetailsDtoRowMapper postDetailsDtoRowMapper;
+
     public PostDao(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
         this.postRowMapper = new PostRowMapper();
+        this.postDetailsDtoRowMapper = new PostDetailsDtoRowMapper();
     }
 
 
@@ -41,8 +49,9 @@ public class PostDao {
         Long generatedId = jdbcTemplate.saveAndGetGeneratedKey(INSERT_SQL, pstmt -> {
             try {
                 pstmt.setLong(1, post.getUserId());
-                pstmt.setString(2, post.getContent());
-                pstmt.setTimestamp(3, Timestamp.valueOf(post.getCreatedAt()));
+                pstmt.setString(2, post.getTitle());
+                pstmt.setString(3, post.getContent());
+                pstmt.setTimestamp(4, Timestamp.valueOf(post.getCreatedAt()));
             } catch (SQLException e) {
                 throw new DBException("error while prepare statement " + INSERT_SQL);
             }
@@ -72,5 +81,10 @@ public class PostDao {
     public int deleteAll() {
         return jdbcTemplate.executeUpdate(DELETE_ALL_SQL, preparedStatement -> {
         });
+    }
+
+    public List<PostDetailsDto> findAllPostWithDetail() {
+        return jdbcTemplate.queryForList(FIND_ALL_POST_WITH_DETAIL_SQL, pstmt -> {
+        }, postDetailsDtoRowMapper);
     }
 }

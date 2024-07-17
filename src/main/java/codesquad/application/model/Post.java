@@ -6,19 +6,22 @@ public class Post {
     private Long id;
     private Long userId;
     private String content;
+    private String title;
     private LocalDateTime createdAt;
 
     public Post(){}
 
-    public Post(Long userId, String contents) {
+    public Post(Long userId, String title, String contents) {
         this.userId = userId;
+        this.title = title;
         this.content = contents;
         this.createdAt = LocalDateTime.now();
     }
 
-    public Post(Long id, Long userId, String content, LocalDateTime createdAt) {
+    public Post(Long id, Long userId, String title, String content, LocalDateTime createdAt) {
         this.id = id;
         this.userId = userId;
+        this.title = title;
         this.content = content;
         this.createdAt = createdAt;
     }
@@ -35,6 +38,10 @@ public class Post {
         return userId;
     }
 
+    public String getTitle() {
+        return title;
+    }
+
     public String getContent() {
         return content;
     }
@@ -48,6 +55,7 @@ public class Post {
         final StringBuilder sb = new StringBuilder("Post{");
         sb.append("id=").append(id);
         sb.append(", userId=").append(userId);
+        sb.append(", title='").append(title).append('\'');
         sb.append(", content='").append(content).append('\'');
         sb.append(", createdAt=").append(createdAt);
         sb.append('}');
