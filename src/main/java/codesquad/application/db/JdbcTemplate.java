@@ -64,7 +64,7 @@ public class JdbcTemplate {
              PreparedStatement pstmt = connection.prepareStatement(sql);
         ) {
             statementConsumer.accept(pstmt);
-            try (ResultSet resultSet = pstmt.executeQuery(sql)) {
+            try (ResultSet resultSet = pstmt.executeQuery()) {
                 List<T> results = new ArrayList<>();
                 while (resultSet.next()) {
                     results.add(rowMapper.mapRow(resultSet));
