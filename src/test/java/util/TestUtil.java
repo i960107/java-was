@@ -44,6 +44,10 @@ public class TestUtil {
 
     public static void assertErrorResponse(HttpResponse response, HttpStatus status) {
         assertEquals(status, response.getStatus());
+        assertEquals(MimeTypes.html.getMIMEType(),
+                response.getHeaders().getHeaderSingleValue(HttpHeaders.CONTENT_TYPE_HEADER).get());
+        assertTrue(containsSubArray(response.getOutputBytes(), status.getCode().getBytes()));
+        assertEquals(status, response.getStatus());
     }
 
     public static void assertResponse(HttpResponse response,
@@ -53,6 +57,27 @@ public class TestUtil {
         assertEquals(status, response.getStatus());
         assertEquals(headers, response.getHeaders());
         assertEquals(body, response.getOutputBytes());
+    }
+
+    public static boolean containsSubArray(byte[] source, byte[] target) {
+        if (source == null || target == null || source.length == 0 || target.length == 0) {
+            return false;
+        }
+
+        if (source.length < target.length) {
+            return false;
+        }
+
+        outerLoop:
+        for (int i = 0; i <= source.length - target.length; i++) {
+            for (int j = 0; j < target.length; j++) {
+                if (source[i + j] != target[j]) {
+                    continue outerLoop;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
 

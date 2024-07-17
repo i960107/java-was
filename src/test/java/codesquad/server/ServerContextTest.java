@@ -2,7 +2,7 @@ package codesquad.server;
 
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static util.TestUtil.assertErrorResponse;
 import static util.TestUtil.get;
 import static util.TestUtil.post;
 
@@ -38,7 +38,7 @@ class ServerContextTest {
                 if (username.equals(testUsername) && password.equals(testPassword)) {
                     throw new AuthenticationException();
                 }
-                return new Principal(username, Role.USER);
+                return new Principal(1L, username, Role.USER);
             }
         };
         context = new ServerContext(
@@ -105,7 +105,7 @@ class ServerContextTest {
         assertArrayEquals("default".getBytes(), response.getOutputBytes());
     }
 
-    @DisplayName("기본 경로로 등록된 핸들러가 없다면 등록되지 않은 경로 요청시 404 응답을 반환한다.")
+    @DisplayName("기본 경로로 등록된 핸들러가 없다면 등록되지 않은 경로 요청시 404 응답  및 에러 페이지를 반환한다.")
     @Test
     void testUnregisteredPathRequest() {
         //given
@@ -117,10 +117,10 @@ class ServerContextTest {
         emptyHandlerServerContext.handle(request, response);
 
         //then
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatus());
+        assertErrorResponse(response, HttpStatus.NOT_FOUND);
     }
 
-    @DisplayName("지원하지 않는 메소드로 요청시 405 응답을 반환한다.")
+    @DisplayName("지원하지 않는 메소드로 요청시 405 응답 및 에러 페이지를 반환한다.")
     @Test
     void testMethodNotAllowedRequestReturn405() {
         //given
@@ -131,10 +131,10 @@ class ServerContextTest {
         context.handle(request, response);
 
         //then
-        assertEquals(HttpStatus.METHOD_NOT_ALLOWED, response.getStatus());
+        assertErrorResponse(response, HttpStatus.METHOD_NOT_ALLOWED);
     }
 
-    @DisplayName("예외 발생시 500 응답을 반환한다.")
+    @DisplayName("예외 발생시 500 응답 및 에러 페이지를 반환한다.")
     @Test
     void testExceptionReturn500() {
         //given
@@ -153,7 +153,7 @@ class ServerContextTest {
         errorContext.handle(request, response);
 
         //then
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatus());
+        assertErrorResponse(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 }
