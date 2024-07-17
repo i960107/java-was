@@ -85,6 +85,7 @@ public class UserDao implements UserAuthBase {
     @Override
     public Optional<Principal> auth(String username, String password) {
          return findByUsername(username)
+                 .filter(user -> user.getPassword().equals(password))
                  .map(user -> new Principal(user.getId(), user.getUsername(), Role.USER));
     }
 }

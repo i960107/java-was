@@ -10,6 +10,7 @@ public class PostRowMapper implements RowMapper<Post> {
         return new Post(
                 resultSet.getLong("id"),
                 resultSet.getLong("user_id"),
+                resultSet.getString("title"),
                 resultSet.getString("content"),
                 resultSet.getTimestamp("created_at").toLocalDateTime()
         );

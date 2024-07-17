@@ -41,6 +41,14 @@
   background: #d9d9d9;
 }
 
+.post__title {
+  width: 664px;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 25.6px;
+  color: #14212b;
+}
+
 .post__article {
   width: 664px;
   font-weight: 400;
