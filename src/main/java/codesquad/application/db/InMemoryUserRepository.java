@@ -1,6 +1,8 @@
 package codesquad.application.db;
 
 import codesquad.application.model.User;
+import codesquad.was.server.authenticator.Principal;
+import codesquad.was.server.authenticator.Role;
 import codesquad.was.server.authenticator.UserAuthBase;
 import java.util.List;
 import java.util.Map;
@@ -43,8 +45,8 @@ public class InMemoryUserRepository implements Repository<User, String>, UserAut
     }
 
     @Override
-    public boolean auth(String username, String password) {
-        Optional<User> user = findBy(username);
-        return user.map(value -> value.getPassword().equals(password)).orElse(false);
+    public Optional<Principal> auth(String username, String password) {
+        return findBy(username)
+                .map(user -> new Principal(user.getId(), user.getUsername(), Role.USER));
     }
 }

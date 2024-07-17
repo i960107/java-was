@@ -1,5 +1,7 @@
 package codesquad.was.server.authenticator;
 
+import java.util.Optional;
+
 public interface UserAuthBase {
-    boolean auth(String username, String password);
+    Optional<Principal> auth(String username, String password);
 }
