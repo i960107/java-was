@@ -19,6 +19,9 @@ public final class IOUtil {
 
     private static final char LF = '\n';
 
+    private IOUtil() {
+    }
+
     public static String readLine(InputStream input) throws IOException {
         int ch;
         StringBuilder sb = new StringBuilder();
@@ -74,6 +77,10 @@ public final class IOUtil {
                 .appendPattern("EEE, dd MMM yyyy HH:mm:ss")
                 .toFormatter(Locale.US);
         return now.format(formatter) + "GMT";
+    }
+
+    public static InputStream getClassPathResource(String path) {
+        return IOUtil.class.getClassLoader().getResourceAsStream(path);
     }
 
 }

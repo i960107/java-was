@@ -1,11 +1,12 @@
 package codesquad.was.server;
 
 import codesquad.was.http.HttpHeaders;
-import codesquad.was.http.HttpStatus;
-import codesquad.was.http.MimeTypes;
 import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
+import codesquad.was.http.MimeTypes;
 import codesquad.was.server.exception.ResourceNotFoundException;
+import codesquad.was.server.exception.ServerException;
+import codesquad.was.util.IOUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import org.slf4j.Logger;
@@ -25,8 +26,7 @@ public class DefaultHandler extends Handler {
         try {
             bytes = file.readAllBytes();
         } catch (IOException e) {
-            response.sendError(HttpStatus.INTERNAL_SERVER_ERROR);
-            return;
+            throw new ServerException();
         }
 
         HttpHeaders headers = new HttpHeaders();
@@ -42,7 +42,7 @@ public class DefaultHandler extends Handler {
             throw new ResourceNotFoundException();
         }
 
-        InputStream resource = getClass().getClassLoader().getResourceAsStream(STATIC_FOLDER + path);
+        InputStream resource = IOUtil.getClassPathResource(STATIC_FOLDER + path);
         if (resource == null) {
             throw new ResourceNotFoundException();
         }
