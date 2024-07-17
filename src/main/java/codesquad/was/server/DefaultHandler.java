@@ -1,6 +1,5 @@
 package codesquad.was.server;
 
-import codesquad.was.http.HttpHeaders;
 import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
 import codesquad.was.http.MimeTypes;
@@ -20,7 +19,14 @@ public class DefaultHandler extends Handler {
 
     @Override
     public void doGet(HttpRequest request, HttpResponse response) {
-        InputStream file = getFile(request.getPath());
+        String path =  request.getPath();
+
+        if(path.equals("/")){
+            response.sendRedirect("/index.html");
+            return;
+        }
+
+        InputStream file = getFile(path);
         byte[] bytes;
 
         try {
@@ -29,12 +35,7 @@ public class DefaultHandler extends Handler {
             throw new ServerException();
         }
 
-        HttpHeaders headers = new HttpHeaders();
-        HttpHeaders.setCommonHeader(headers);
-        headers.setHeader(HttpHeaders.CONTENT_LENGTH_HEADER, String.valueOf(bytes.length));
-        headers.setHeader(HttpHeaders.CONTENT_TYPE_HEADER, MimeTypes.getMimeTypeFromExtension(request.getPath()));
-
-        response.send(headers, bytes);
+        response.send(MimeTypes.getMimeTypeFromExtension(path), bytes);
     }
 
     private InputStream getFile(String path) {

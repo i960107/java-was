@@ -13,6 +13,7 @@ public enum MimeTypes {
     svg("image/svg+xml"),
     css("text/css"),
     html("text/html"),
+    text("text/plain"),
     ico("image/x-icon"),
     js("application/javascript"),
     png("image/png"),
@@ -27,13 +28,13 @@ public enum MimeTypes {
         this.MIMEType = MIMEType;
     }
 
-    public static String getMimeTypeFromExtension(String fileName) {
+    public static MimeTypes getMimeTypeFromExtension(String fileName) {
         int index = fileName.indexOf(".");
         if (index == -1 || index + 1 >= fileName.length()) {
             throw new IllegalArgumentException();
         }
         String extension = fileName.substring(index + 1);
-        return valueOf(extension).getMIMEType();
+        return valueOf(extension);
     }
 
     public static MimeTypes getMimeTypeFromContentType(String contentType) {

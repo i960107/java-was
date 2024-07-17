@@ -100,8 +100,10 @@ public class HttpResponse {
         addHeader(new HttpHeader(HttpHeaders.LOCATION, redirectUrl));
     }
 
-    public void send(HttpHeaders headers, byte[] body) {
-        setHeaders(headers);
+    public void send(MimeTypes contentType, byte[] body) {
+        setHeaders(HttpHeaders.getDefault());
+        addHeader(new HttpHeader(HttpHeaders.CONTENT_LENGTH_HEADER, String.valueOf(body.length)));
+        addHeader(new HttpHeader(HttpHeaders.CONTENT_TYPE_HEADER, contentType.getMIMEType()));
         this.out.writeBytes(body);
     }
 
