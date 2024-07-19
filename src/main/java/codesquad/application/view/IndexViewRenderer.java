@@ -30,7 +30,12 @@ public class IndexViewRenderer extends ViewRenderer {
                 html.append(
                         "                <p class=\"post__account__nickname\">" + post.getAuthorNickname() + "</p>");
                 html.append("            </div>");
-                html.append("            <img class=\"post__img\"/>");
+                html.append("            <img class=\"post__img\" src=\"upload/");
+                html.append(post.getFileName());
+                html.append("\"/>");
+                html.append("            <input type=\"hidden\" name = \"postId\" value=\"");
+                html.append(post.getPostId());
+                html.append("\"/>");
                 html.append("            <div class=\"post__menu\">");
                 html.append("                <ul class=\"post__menu__personal\">");
                 html.append("                    <li>");
