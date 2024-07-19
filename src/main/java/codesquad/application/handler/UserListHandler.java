@@ -4,7 +4,7 @@ import codesquad.application.db.UserDao;
 import codesquad.application.view.UserListViewRenderer;
 import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
-import codesquad.was.http.MimeTypes;
+import codesquad.was.http.MimeType;
 import codesquad.was.server.Handler;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +34,6 @@ public class UserListHandler extends Handler {
         parameters.put("users", userDao.findAll());
         String html = userListViewRenderer.render(parameters);
 
-        response.send(MimeTypes.html, html.getBytes());
+        response.send(MimeType.html, html.getBytes());
     }
 }

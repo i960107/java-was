@@ -21,6 +21,8 @@ public class DBConfig {
     private int connectionTimeout;
     private int idleTimeout;
 
+    public DBConfig(){}
+
     public DBConfig(String url, String username, String password, String driverClassName, int minIdle,
                     int maxPoolSize, int connectionTimeout, int idleTimeout) {
         this.url = url;

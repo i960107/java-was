@@ -21,7 +21,7 @@ dependencies {
     testImplementation 'org.assertj:assertj-core:3.21.0'
 
     implementation 'ch.qos.logback:logback-classic:1.4.12'
-    implementation 'com.h2database:h2:2.1.214'
+    implementation 'com.h2database:h2:2.3.230'
 }
 
 test {
