@@ -24,11 +24,13 @@ public class HttpRequest {
 
     private String host;
 
-    private MimeTypes contentType;
+    private MimeType contentType;
 
     private HttpHeaders headers;
 
     private Map<String, List<String>> parameters;
+
+    private List<Part> parts;
 
     private List<HttpCookie> cookies;
 
@@ -42,13 +44,8 @@ public class HttpRequest {
 
     private String sessionId;
 
-    public HttpRequest() {
-    }
-
     public HttpRequest(ServerContext context) {
         this.context = context;
-        this.cookies = new ArrayList<>();
-        parameters = new HashMap<>();
     }
 
     public HttpRequest(
@@ -57,35 +54,50 @@ public class HttpRequest {
             String path,
             String protocol,
             String host,
+            MimeType contentType,
             HttpHeaders headers,
-            List<HttpCookie> cookies,
             Map<String, List<String>> parameters,
+            List<Part> parts,
+            List<HttpCookie> cookies,
             byte[] body) {
         this.context = context;
         this.method = method;
         this.path = path;
         this.protocol = protocol;
         this.host = host;
+        this.contentType = contentType;
         this.headers = headers;
-        this.cookies = cookies == null ? new ArrayList<>() : cookies;
-        this.parameters = parameters == null ? new HashMap<>() : parameters;
+        this.parameters = parameters;
+        this.parts = parts;
+        this.cookies = cookies;
         this.body = body;
-
     }
 
     public HttpHeaders getHeaders() {
+        if (this.headers == null) {
+            this.headers = HttpHeaders.empty();
+        }
         return headers;
     }
 
     public Optional<HttpHeader> getHeader(String name) {
+        if (this.headers == null) {
+            this.headers = HttpHeaders.empty();
+        }
         return headers.getHeader(name);
     }
 
     public Map<String, List<String>> getParameterMap() {
+        if (this.parameters == null) {
+            this.parameters = new HashMap<>();
+        }
         return Collections.unmodifiableMap(parameters);
     }
 
     public List<String> getParameters(String name) {
+        if (this.parameters == null) {
+            this.parameters = new HashMap<>();
+        }
         if (parameters.containsKey(name)) {
             return Collections.unmodifiableList(parameters.get(name));
         } else {
@@ -94,6 +106,9 @@ public class HttpRequest {
     }
 
     public Optional<String> getParameter(String name) {
+        if (this.parameters == null) {
+            this.parameters = new HashMap<>();
+        }
         return getParameters(name).stream().findFirst();
     }
 
@@ -105,7 +120,6 @@ public class HttpRequest {
     public String getHost() {
         return host;
     }
-
 
     public String getPath() {
         return path;
@@ -119,16 +133,26 @@ public class HttpRequest {
         return body;
     }
 
-    public MimeTypes getContentType() {
+    public MimeType getContentType() {
         return contentType;
     }
 
     public List<HttpCookie> getCookies() {
+        if (this.cookies == null) {
+            this.cookies = new ArrayList<>();
+        }
         return cookies.stream().toList();
     }
 
     public Principal getPrincipal() {
         return principal;
+    }
+
+    public List<Part> getParts() {
+        if (this.parts == null) {
+            this.parts = new ArrayList<>();
+        }
+        return parts;
     }
 
     public void setMethod(HttpMethod method) {
@@ -151,7 +175,7 @@ public class HttpRequest {
         this.headers = headers;
     }
 
-    public void setContentType(MimeTypes contentType) {
+    public void setContentType(MimeType contentType) {
         this.contentType = contentType;
     }
 
@@ -170,6 +194,10 @@ public class HttpRequest {
         this.body = body;
     }
 
+    public void setParts(List<Part> parts) {
+        this.parts = parts;
+    }
+
     public void setCookies(List<HttpCookie> cookies) {
         this.cookies = cookies;
     }
@@ -183,6 +211,9 @@ public class HttpRequest {
     }
 
     public Optional<HttpCookie> getCookie(String name) {
+        if (this.cookies == null) {
+            this.cookies = new ArrayList<>();
+        }
         return cookies.stream().filter(cookie -> cookie.getKey().equals(name)).findFirst();
     }
 
@@ -275,6 +306,7 @@ public class HttpRequest {
         sb.append("host='").append(host).append('\'').append(System.lineSeparator());
         sb.append("headers=").append(headers).append(System.lineSeparator());
         sb.append("cookies=").append(cookies).append(System.lineSeparator());
+        sb.append("parts").append(parts).append(System.lineSeparator());
         sb.append("parameters=").append(parameters).append(System.lineSeparator());
         sb.append("body=").append(Arrays.toString(body)).append(System.lineSeparator());
         sb.append("}").append(System.lineSeparator());

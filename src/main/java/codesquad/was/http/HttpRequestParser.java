@@ -1,16 +1,21 @@
 package codesquad.was.http;
 
+import static codesquad.was.util.ByteArrayUtil.copy;
+import static codesquad.was.util.ByteArrayUtil.indexOf;
 import static codesquad.was.util.IOUtil.readLine;
 import static codesquad.was.util.IOUtil.readToSize;
 
 import codesquad.was.http.exception.HeaderSyntaxException;
 import codesquad.was.http.exception.HttpProtocolException;
 import codesquad.was.http.exception.NotSupportedHttpMethodException;
+import codesquad.was.util.IOUtil;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,15 +59,25 @@ public final class HttpRequestParser {
         HttpHeaders headers = parseHeaders(input);
         setRequestHeaders(request, headers);
 
-        //--- body (Content-Length 헤더 있을때만)
+        //--- body (Content-Length 헤더 있을때만 파싱, content type에 따라서 파싱 방법이 다름)
         Optional<String> headerSingleValue = headers.getHeaderSingleValue(HttpHeaders.CONTENT_LENGTH_HEADER);
         if (headerSingleValue.isEmpty()) {
             return;
         }
 
         int contentLength = Integer.parseInt(headerSingleValue.get());
-        byte[] body = parseBody(input, contentLength);
-        setRequestBody(request, body);
+
+        if (isFormData(request.getContentType())) {
+            String formData = new String(parseBody(input, contentLength), DEFAULT_CHARSET);
+            Map<String, List<String>> parameters = parseRequestParameters(formData);
+            request.addParameters(parameters);
+        } else if (isMultiPartData(request.getContentType())) {
+            List<Part> parts = parseMultiPart(getBoundary(headers), input);
+            request.setParts(parts);
+        } else {
+            byte[] body = parseBody(input, contentLength);
+            request.setBody(body);
+        }
     }
 
     private static HttpMethod getHttpMethod(String parsedMethod) {
@@ -173,7 +188,7 @@ public final class HttpRequestParser {
 
         headers.getHeaderSingleValue(HttpHeaders.CONTENT_TYPE_HEADER)
                 .ifPresent(value -> {
-                    MimeTypes contentType = MimeTypes.getMimeTypeFromContentType(value);
+                    MimeType contentType = MimeType.getMimeTypeFromContentType(value);
                     request.setContentType(contentType);
                 });
 
@@ -187,7 +202,7 @@ public final class HttpRequestParser {
 
         Optional<String> contentType = headers.getHeaderSingleValue(HttpHeaders.CONTENT_TYPE_HEADER);
         if (contentType.isPresent()) {
-            MimeTypes type = MimeTypes.getMimeTypeFromContentType(contentType.get());
+            MimeType type = MimeType.getMimeTypeFromContentType(contentType.get());
             if (isFormData(type) && !hasSingleValue(headers, HttpHeaders.CONTENT_LENGTH_HEADER)) {
                 isValid = false;
             }
@@ -221,19 +236,14 @@ public final class HttpRequestParser {
         return headers.getHeaderSingleValue(key).isPresent();
     }
 
-    private static void setRequestBody(HttpRequest request, byte[] body) throws IOException {
-        if (isFormData(request.getContentType())) {
-            String formData = new String(body, DEFAULT_CHARSET);
-            Map<String, List<String>> parameters = parseRequestParameters(formData);
-            request.addParameters(parameters);
-        } else {
-            request.setBody(body);
-        }
+    private static boolean isFormData(MimeType contentType) {
+        return contentType != null &&
+                contentType.equals(MimeType.form_data);
     }
 
-    private static boolean isFormData(MimeTypes contentType) {
+    private static boolean isMultiPartData(MimeType contentType) {
         return contentType != null &&
-                contentType.equals(MimeTypes.form_data);
+                contentType.equals(MimeType.multipart_fom_data);
     }
 
     private static byte[] parseBody(InputStream input, int contentLength) {
@@ -243,4 +253,71 @@ public final class HttpRequestParser {
             throw new HttpProtocolException("incomplete body read");
         }
     }
+
+    private static byte[] getBoundary(HttpHeaders headers) {
+        return headers.getHeaderSingleValue(HttpHeaders.CONTENT_TYPE_HEADER)
+                .map(value -> value.substring(value.indexOf("boundary=") + 9).getBytes())
+                .orElseThrow(() -> new HttpProtocolException("boundary not found"));
+    }
+
+    private static List<Part> parseMultiPart(byte[] boundary, InputStream input) {
+        try {
+            byte[] body = input.readAllBytes();
+
+            int start = 0;
+            List<Part> parts = new ArrayList<>();
+            byte[] realBoundary = getRealBoundary(boundary);
+            while (start + realBoundary.length + 4 < body.length) {
+                int boundaryStartIndex = indexOf(body, realBoundary, start);
+                int nextBoundaryStartIndex = indexOf(body, realBoundary, boundaryStartIndex + realBoundary.length);
+                if (boundaryStartIndex == -1 || nextBoundaryStartIndex == -1) {
+                    throw new HttpProtocolException("incomplete part read");
+                }
+                try (ByteArrayInputStream partStream = new ByteArrayInputStream(
+                        body,
+                        boundaryStartIndex + realBoundary.length + 2,
+                        nextBoundaryStartIndex - boundaryStartIndex - realBoundary.length - 2)) {
+                    Part part = parsePart(partStream);
+                    parts.add(part);
+                }
+                start = nextBoundaryStartIndex;
+            }
+            String last = new String(copy(body, start, realBoundary.length + 4));
+            if (!last.equals(getEndBoundary(boundary))) {
+                throw new HttpProtocolException("invalid multipart end");
+            }
+
+            return parts;
+        } catch (Exception e) {
+            throw new HttpProtocolException("fail part read");
+        }
+    }
+
+    private static Part parsePart(InputStream part) throws IOException {
+        HttpHeaders partHeader = parseHeaders(part);
+        byte[] partBody = parseBody(part, part.available() - 2);
+        if (!Arrays.equals(part.readAllBytes(), IOUtil.CRLF)) {
+            throw new HttpProtocolException("invalid part body");
+        }
+        return Part.from(partHeader, partBody);
+    }
+
+    private static byte[] getRealBoundary(byte[] boundary) {
+        byte[] prefixBytes = "--".getBytes();
+        byte[] realBoundary = new byte[prefixBytes.length + boundary.length];
+        System.arraycopy(prefixBytes, 0, realBoundary, 0, prefixBytes.length);
+        System.arraycopy(boundary, 0, realBoundary, prefixBytes.length, boundary.length);
+        return realBoundary;
+    }
+
+    private static String getEndBoundary(byte[] boundary) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("--");
+        sb.append(new String(boundary));
+        sb.append("--");
+        sb.append(new String(IOUtil.CRLF));
+        return sb.toString();
+
+    }
+
 }

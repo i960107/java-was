@@ -28,6 +28,8 @@ public class HttpHeaders {
 
     public static final String SID = "SID";
 
+    public static final String CONTENT_DISPOSITION = "Content-Disposition";
+
     private final List<HttpHeader> headers;
 
     public HttpHeaders() {
