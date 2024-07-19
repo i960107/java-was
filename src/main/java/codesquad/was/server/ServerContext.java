@@ -13,12 +13,16 @@ import codesquad.was.server.exception.MalformedPathException;
 import codesquad.was.server.exception.MethodNotAllowedException;
 import codesquad.was.server.exception.ResourceNotFoundException;
 import codesquad.was.server.session.SessionManager;
+import codesquad.was.util.IOUtil;
+import java.io.InputStreamReader;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import org.h2.tools.RunScript;
 import org.h2.tools.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +53,7 @@ public class ServerContext {
         this.sessionManager = sessionManager;
         this.authenticator = authenticator;
         this.connectionPool = setUpConnectionPool(dbConfig);
+        createTable();
         mappings = new HashMap<>();
         filters = new ArrayList<>();
     }
@@ -79,6 +84,16 @@ public class ServerContext {
         return pool;
     }
 
+    private void createTable() {
+        try (Connection conn = this.connectionPool.getConnection()) {
+            RunScript.execute(conn,
+                    new InputStreamReader(IOUtil.getClassPathResource("init.sql")));
+            log.info("table created");
+        } catch (SQLException e) {
+            log.warn("fail to create table");
+        }
+    }
+
     public void addHandler(String path, Handler handler) {
         if (!supportedPathPattern.matcher(path).matches()) {
             throw new MalformedPathException();
@@ -100,6 +115,12 @@ public class ServerContext {
 
     public void setConnectionPool(DBConfig config) {
         this.connectionPool = setUpConnectionPool(config);
+        createTable();
+    }
+
+    public void setConnectionPool(ConnectionPool connectionPool) {
+        this.connectionPool = connectionPool;
+        createTable();
     }
 
     private void addFilter(int order, Filter filter) {
@@ -167,5 +188,14 @@ public class ServerContext {
 
     public Authenticator getAuthenticator() {
         return authenticator;
+    }
+
+    public void clear() {
+        try {
+            log.info("clear server context");
+            connectionPool.shutDown();
+        } catch (SQLException e) {
+            log.warn("fail to shutdown connection pool");
+        }
     }
 }
