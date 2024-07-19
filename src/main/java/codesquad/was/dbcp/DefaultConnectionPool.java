@@ -1,5 +1,6 @@
 package codesquad.was.dbcp;
 
+import codesquad.was.server.exception.ServerException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -55,6 +56,7 @@ public class DefaultConnectionPool implements ConnectionPool {
             }
         } catch (SQLException exception) {
             log.warn("connection creation error : {}", exception.getMessage());
+            throw new ServerException("connection creation error");
         }
         this.currentPoolSize = new AtomicInteger(minIdle);
         log.info("Connection pool created, current pool size: " + currentPoolSize.get());

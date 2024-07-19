@@ -30,7 +30,7 @@ public class HttpProcessor {
             try {
                 request = processRequest(inputStream);
             } catch (HttpProtocolException e) {
-                log.warn("error parsing http request : {}, {} ", e.getClass(), e.getMessage());
+                log.warn("error parsing http request : {}, {} ", e.getClass());
                 writeErrorResponse(outputStream);
                 return;
             }
@@ -38,9 +38,9 @@ public class HttpProcessor {
             HttpResponse response = new HttpResponse(request);
             processResponse(request, response);
             HttpResponseWriter.write(outputStream, response);
-
+            log.info(response.toString());
         } catch (IOException e) {
-            log.warn("io exception occured while processing request : {}", e.getMessage());
+            log.warn("io exception occurred while processing request : {}{}", e.getClass(), e.getMessage());
         }
     }
 
@@ -55,8 +55,6 @@ public class HttpProcessor {
 
     public void processResponse(HttpRequest request, HttpResponse response) throws IOException {
         context.handle(request, response);
-
-        log.info(response.toString());
     }
 
     private static void writeErrorResponse(BufferedOutputStream outputStream) throws IOException {

@@ -11,16 +11,31 @@ public class HttpProtocol {
 
     private final Endpoint<Socket, SocketProcessor> endpoint;
 
+    private final int DEFAULT_PORT = 8080;
+
     public HttpProtocol(ServerContext handlerServerContext) {
         NamedThreadFactory acceptorThreadFactory = new NamedThreadFactory("http-bio-acceptor");
         NamedThreadFactory workerThreadFactory = new NamedThreadFactory(namePrefix);
 
         int workerThreadCount = calculateOptimalThreads();
         this.endpoint = new JIoEndpoint(
-                8080,
+                DEFAULT_PORT,
                 workerThreadCount * 2,
                 Executors.newSingleThreadExecutor(acceptorThreadFactory),
                 Executors.newFixedThreadPool(calculateOptimalThreads(), workerThreadFactory),
+                () -> new HttpProcessor(handlerServerContext)
+        );
+    }
+
+    public HttpProtocol(ServerContext handlerServerContext, int port, int workerThreadCount) {
+        NamedThreadFactory acceptorThreadFactory = new NamedThreadFactory("http-bio-acceptor");
+        NamedThreadFactory workerThreadFactory = new NamedThreadFactory(namePrefix);
+
+        this.endpoint = new JIoEndpoint(
+                port,
+                workerThreadCount * 2,
+                Executors.newSingleThreadExecutor(acceptorThreadFactory),
+                Executors.newFixedThreadPool(workerThreadCount, workerThreadFactory),
                 () -> new HttpProcessor(handlerServerContext)
         );
     }
