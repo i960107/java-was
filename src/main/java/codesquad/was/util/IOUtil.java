@@ -2,7 +2,6 @@ package codesquad.was.util;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -15,30 +14,17 @@ public final class IOUtil {
 
     public static final String UTF8 = "UTF-8";
 
+    public static final byte[] CRLF = new byte[] {'\r', '\n'};
+
     private static final char CR = '\r';
 
     private static final char LF = '\n';
+
 
     private IOUtil() {
     }
 
     public static String readLine(InputStream input) throws IOException {
-        int ch;
-        StringBuilder sb = new StringBuilder();
-        while ((ch = input.read()) != -1) {
-            if (ch == CR) {
-                continue;
-            } else if (ch == LF) {
-                break;
-            } else {
-                sb.append((char) ch);
-            }
-        }
-
-        return ch == -1 && sb.isEmpty() ? null : sb.toString();
-    }
-
-    public static String readLine(InputStreamReader input) throws IOException {
         int ch;
         StringBuilder sb = new StringBuilder();
         while ((ch = input.read()) != -1) {
