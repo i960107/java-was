@@ -14,6 +14,7 @@ public class PostDetailsDtoRowMapper implements RowMapper<PostDetailsDto> {
                 rs.getString("content"),
                 rs.getLong("userId"),
                 rs.getString("nickname"),
+                rs.getString("filename"),
                 rs.getTimestamp("created_at").toLocalDateTime()
         );
     }

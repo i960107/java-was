@@ -35,6 +35,7 @@ public final class HttpResponseWriter {
         if (response.hasBody()) {
             writeBody(out, response.getOutputBytes());
         }
+
         out.flush();
     }
 }

@@ -7,8 +7,15 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class RequestParamModelMapper {
+public final class RequestParamModelMapper {
+
+    private static Logger log = LoggerFactory.getLogger(RequestParamModelMapper.class);
+
+    private RequestParamModelMapper() {
+    }
 
     public static <T> T map(Map<String, List<String>> requestParameters, Class<T> type) {
         try {
@@ -39,7 +46,8 @@ public class RequestParamModelMapper {
             }
             return model;
         } catch (Exception e) {
-            throw new ModelMappingException("fail to map parameters to model" + type.getName());
+            log.warn("fail to map parameters to model {} : {} ", type.getName(), e);
+            throw new ModelMappingException("fail to map parameters to model " + type.getName());
         }
     }
 

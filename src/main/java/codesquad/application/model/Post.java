@@ -5,24 +5,27 @@ import java.time.LocalDateTime;
 public class Post {
     private Long id;
     private Long userId;
-    private String content;
     private String title;
+    private String content;
+    private String fileName;
     private LocalDateTime createdAt;
 
     public Post(){}
 
-    public Post(Long userId, String title, String contents) {
+    public Post(Long userId, String title, String contents, String fileName) {
         this.userId = userId;
         this.title = title;
         this.content = contents;
+        this.fileName = fileName;
         this.createdAt = LocalDateTime.now();
     }
 
-    public Post(Long id, Long userId, String title, String content, LocalDateTime createdAt) {
+    public Post(Long id, Long userId, String title, String content, String fileName, LocalDateTime createdAt) {
         this.id = id;
         this.userId = userId;
         this.title = title;
         this.content = content;
+        this.fileName = fileName;
         this.createdAt = createdAt;
     }
 
@@ -46,6 +49,10 @@ public class Post {
         return content;
     }
 
+    public String getFileName() {
+        return fileName;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -57,6 +64,7 @@ public class Post {
         sb.append(", userId=").append(userId);
         sb.append(", title='").append(title).append('\'');
         sb.append(", content='").append(content).append('\'');
+        sb.append(", filename='").append(fileName).append('\'');
         sb.append(", createdAt=").append(createdAt);
         sb.append('}');
         return sb.toString();

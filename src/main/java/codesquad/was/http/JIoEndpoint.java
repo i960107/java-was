@@ -39,13 +39,26 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
         this.backlog = backlog;
         this.acceptorExecutorService = acceptorExecutorService;
         this.workerExecutorService = workerExecutorService;
-        int workers = ((ThreadPoolExecutor) workerExecutorService).getCorePoolSize();
+        int workerCount = ((ThreadPoolExecutor) workerExecutorService).getCorePoolSize();
         log.info("acceptor thread created");
-        log.info("{} worker threads created", workers);
-
-        this.processors = new ArrayBlockingQueue<>(workers);
+        log.info("{} worker threads created", workerCount);
+        this.processors = new ArrayBlockingQueue<>(workerCount);
         this.processorSupplier = processorSupplier;
     }
+
+    private HttpProcessor getProcessor() {
+        try {
+            HttpProcessor processor = processors.poll();
+            if (processor == null) {
+                processor = processorSupplier.get();
+            }
+            return processor;
+        } catch (Exception e) {
+            log.warn("fail to get processor", e);
+            return null;
+        }
+    }
+
 
     @Override
     public void bind() throws IOException {
@@ -80,13 +93,6 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
         return new SocketProcessor(socket);
     }
 
-    private HttpProcessor getProcessor() {
-        HttpProcessor processor = processors.poll();
-        if (processor == null) {
-            processor = processorSupplier.get();
-        }
-        return processor;
-    }
 
     private void recycleProcessor(HttpProcessor processor) {
         processors.offer(processor);
@@ -98,9 +104,9 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
             while (running) {
                 try {
                     Socket socket = serverSocket.accept();
-                    SocketProcessor worker = createWorker(socket);
+                    log.info("accept socket {}", socket.toString());
                     log.info("acceptor accepts connection and delegating it to worker thread");
-                    workerExecutorService.execute(worker);
+                    workerExecutorService.execute(new SocketProcessor(socket));
                 } catch (IOException exception) {
                     log.warn("fail while accepting socket and allocating it to worker thread");
                 }
@@ -119,13 +125,19 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
 
         @Override
         public void run() {
-            HttpProcessor processor = getProcessor();
+            //todo queue에서 가져오도록 고치기
+            HttpProcessor processor = processorSupplier.get();
             try {
+                log.info("process socket {}", socket.toString());
                 processor.process(socket);
+                socket.setSoTimeout(3000);
+            } catch (IOException e) {
+                log.warn("exception while processing: {} socket{}", e.getMessage(), socket.toString());
             } finally {
                 recycleProcessor(processor);
                 try {
                     socket.close();
+                    log.info("socket closed {}", socket.toString());
                 } catch (IOException e) {
                     log.warn("exception closing socket", e);
                 }

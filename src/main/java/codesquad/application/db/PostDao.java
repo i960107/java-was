@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 public class PostDao {
 
-    private static final String INSERT_SQL = "INSERT INTO `post`(user_id, title, content, created_at) VALUES(?, ?, ?, ?)";
+    private static final String INSERT_SQL = "INSERT INTO `post`(user_id, title, content, filename, created_at) VALUES(?, ?, ?, ?, ?)";
 
     private static final String FIND_BY_ID_SQL = "SELECT * FROM `post` where id = ?";
 
@@ -21,7 +21,7 @@ public class PostDao {
     private static final String DELETE_ALL_SQL = "DELETE FROM `post`";
 
     private static final String FIND_ALL_POST_WITH_DETAIL_SQL =
-            "SELECT p.id, title, content, u.id as userId, nickname, p.created_at "
+            "SELECT p.id, title, content, u.id as userId, nickname, filename, p.created_at "
                     + "FROM `post` p JOIN `user` u ON p.user_id = u.id ORDER BY p.created_at DESC";
 
     private final Logger log = LoggerFactory.getLogger(getClass());
@@ -41,6 +41,7 @@ public class PostDao {
 
     public Post save(Post post) {
         if (post == null) {
+            log.warn("post cannot be null" );
             throw new IllegalArgumentException("post is null");
         }
         if (post.getCreatedAt() == null) {
@@ -51,8 +52,10 @@ public class PostDao {
                 pstmt.setLong(1, post.getUserId());
                 pstmt.setString(2, post.getTitle());
                 pstmt.setString(3, post.getContent());
-                pstmt.setTimestamp(4, Timestamp.valueOf(post.getCreatedAt()));
+                pstmt.setString(4, post.getFileName());
+                pstmt.setTimestamp(5, Timestamp.valueOf(post.getCreatedAt()));
             } catch (SQLException e) {
+                log.warn("error while prepare statement : {}" , INSERT_SQL);
                 throw new DBException("error while prepare statement " + INSERT_SQL);
             }
         });
@@ -65,6 +68,7 @@ public class PostDao {
                     try {
                         pstmt.setLong(1, id);
                     } catch (SQLException e) {
+                        log.warn("error while prepare statement : {}" , FIND_BY_ID_SQL);
                         throw new DBException("error while prepare statement " + FIND_BY_ID_SQL);
                     }
                 },
