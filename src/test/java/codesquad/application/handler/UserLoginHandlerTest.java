@@ -6,9 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static util.TestUtil.assertRedirectResponse;
 import static util.TestUtil.get;
 import static util.TestUtil.post;
+import static util.TestUtil.setUpDbAndGetConnectionPool;
 
-import codesquad.application.db.InMemoryUserRepository;
+import codesquad.application.db.JdbcTemplate;
+import codesquad.application.db.UserDao;
 import codesquad.application.model.User;
+import codesquad.was.dbcp.ConnectionPool;
 import codesquad.was.http.HttpHeaders;
 import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
@@ -26,38 +29,41 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 class UserLoginHandlerTest {
+
     private static UserLoginHandler handler;
 
     private static ServerContext serverContext;
 
     private static SessionManager sessionManager;
 
-    private static InMemoryUserRepository userRepository;
+    private static UserDao userDao;
 
     private String username;
+
     private String password;
 
     @BeforeAll
     static void beforeAll() {
+        serverContext = new ServerContext();
+
         sessionManager = new InMemorySessionManager();
-        userRepository = new InMemoryUserRepository();
-        ServerContext context = new ServerContext(
-                sessionManager,
-                new DefaultAuthenticator(userRepository),
-                null
-        );
-        serverContext = context;
+        serverContext.setSessionManager(sessionManager);
+
+        ConnectionPool pool = setUpDbAndGetConnectionPool();
+        userDao = new UserDao(new JdbcTemplate(pool));
         handler = new UserLoginHandler();
-        context.addHandler("/login", handler);
+        serverContext.addHandler("/login", handler);
+
+        serverContext.setAuthenticator(new DefaultAuthenticator(userDao));
     }
 
     @BeforeEach
     void setUp() {
-        userRepository.deleteAll();
+        userDao.deleteAll();
         username = "박재성";
         password = "123456";
         User user = new User(username, "nickname", password);
-        userRepository.save(user);
+        userDao.save(user);
     }
 
     @Test

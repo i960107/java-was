@@ -9,7 +9,7 @@ class IndexHandlerTest {
 
     @BeforeAll
     static void beforeAll() {
-        indexHandler = new IndexHandler();
+        indexHandler = new IndexHandler(null);
     }
 
     @Test

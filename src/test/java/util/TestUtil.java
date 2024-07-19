@@ -3,37 +3,60 @@ package util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import codesquad.application.db.DBConfig;
+import codesquad.was.dbcp.ConnectionPool;
+import codesquad.was.dbcp.DefaultConnectionPool;
 import codesquad.was.http.HttpHeaders;
 import codesquad.was.http.HttpMethod;
 import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
 import codesquad.was.http.HttpStatus;
+import codesquad.was.http.MimeType;
+import codesquad.was.http.Part;
 import codesquad.was.server.ServerContext;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.Socket;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import org.h2.tools.RunScript;
 
 public class TestUtil {
+    public static HttpRequest of(
+            ServerContext context,
+            HttpMethod method,
+            String path,
+            HttpHeaders headers,
+            Map<String, List<String>> parameters,
+            List<Part> parts,
+            byte[] body) {
+
+        MimeType contentType = headers.contains(HttpHeaders.CONTENT_TYPE_HEADER) ?
+                MimeType.getMimeTypeFromContentType(headers.getHeaderSingleValue(HttpHeaders.CONTENT_TYPE_HEADER).get())
+                : null;
+
+        return new HttpRequest(context, method, path, "HTTP/1.1", "localhost", contentType,
+                headers, parameters, parts, null, body);
+    }
 
     public static HttpRequest get(String path) {
-        return new HttpRequest(null, HttpMethod.GET, path, "HTTP1.1", "localhost", HttpHeaders.getDefault(), null, null,
-                null);
+        return of(null, HttpMethod.GET, path, HttpHeaders.getDefault(), null, null, null);
     }
 
     public static HttpRequest get(ServerContext context, String path, HttpHeaders headers) {
-        return new HttpRequest(context, HttpMethod.GET, path, "HTTP1.1", "localhost", headers, null, null, null);
+        return of(context, HttpMethod.GET, path, headers, null, null, null);
     }
 
     public static HttpRequest post(String path, Map<String, List<String>> parameters, byte[] body) {
-        return new HttpRequest(null, HttpMethod.POST, path, "HTTP1.1", "localhost", HttpHeaders.getDefault(), null,
-                parameters,
-                body);
+        return of(null, HttpMethod.POST, path, HttpHeaders.getDefault(), parameters, null, body);
     }
 
     public static HttpRequest post(ServerContext context, String path, Map<String, List<String>> parameters,
                                    byte[] body) {
-        return new HttpRequest(context, HttpMethod.POST, path, "HTTP1.1", "localhost", HttpHeaders.getDefault(), null,
-                parameters,
-                body);
+        return of(context, HttpMethod.POST, path, HttpHeaders.getDefault(), parameters, null, body);
     }
 
     public static void assertRedirectResponse(HttpResponse response, String redirectUrl) {
@@ -44,7 +67,7 @@ public class TestUtil {
 
     public static void assertErrorResponse(HttpResponse response, HttpStatus status) {
         assertEquals(status, response.getStatus());
-        assertEquals(MimeTypes.html.getMIMEType(),
+        assertEquals(MimeType.html.getMIMEType(),
                 response.getHeaders().getHeaderSingleValue(HttpHeaders.CONTENT_TYPE_HEADER).get());
         assertTrue(containsSubArray(response.getOutputBytes(), status.getCode().getBytes()));
         assertEquals(status, response.getStatus());
@@ -80,5 +103,29 @@ public class TestUtil {
         return false;
     }
 
+    public static ConnectionPool setUpDbAndGetConnectionPool() {
+        DBConfig config = DBConfig.getDBConfig("application.properties");
+        DefaultConnectionPool pool = new DefaultConnectionPool(
+                config.getUrl(),
+                config.getUsername(),
+                config.getPassword(),
+                config.getMaxPoolSize(),
+                config.getMinIdle(),
+                config.getConnectionTimeout(),
+                config.getIdleTimeout()
+        );
+        try (Connection conn = pool.getConnection()) {
+            RunScript.execute(conn,
+                    new InputStreamReader(TestUtil.class.getClassLoader().getResourceAsStream("init.sql")));
+        } catch (SQLException e) {
+            System.out.println("fail to create table");
+        }
+        return pool;
+    }
+
+    public static void execute(Socket client, String filename) throws IOException {
+        InputStream input = TestUtil.class.getClassLoader().getResourceAsStream(filename);
+        client.getOutputStream().write(input.readAllBytes());
+    }
 
 }

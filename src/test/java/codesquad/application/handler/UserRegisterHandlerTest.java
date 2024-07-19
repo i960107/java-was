@@ -4,10 +4,11 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static util.TestUtil.assertRedirectResponse;
 import static util.TestUtil.post;
-import static util.TestUtil.setUpDbAndJdbcTemplate;
+import static util.TestUtil.setUpDbAndGetConnectionPool;
 
 import codesquad.application.db.JdbcTemplate;
 import codesquad.application.db.UserDao;
+import codesquad.was.dbcp.ConnectionPool;
 import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
 import codesquad.was.http.HttpStatus;
@@ -27,8 +28,8 @@ class UserRegisterHandlerTest {
 
     @BeforeAll
     static void beforeAll() {
-        JdbcTemplate jdbcTemplate = setUpDbAndJdbcTemplate();
-        userDao = new UserDao(jdbcTemplate);
+        ConnectionPool pool = setUpDbAndGetConnectionPool();
+        userDao = new UserDao(new JdbcTemplate(pool));
         userRegisterHandler = new UserRegisterHandler(userDao);
     }
 

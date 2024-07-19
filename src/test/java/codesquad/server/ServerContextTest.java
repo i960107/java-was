@@ -6,10 +6,10 @@ import static util.TestUtil.assertErrorResponse;
 import static util.TestUtil.get;
 import static util.TestUtil.post;
 
-import codesquad.was.http.HttpHeaders;
 import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
 import codesquad.was.http.HttpStatus;
+import codesquad.was.http.MimeType;
 import codesquad.was.server.Handler;
 import codesquad.was.server.ServerContext;
 import codesquad.was.server.authenticator.Authenticator;
@@ -41,28 +41,27 @@ class ServerContextTest {
                 return new Principal(1L, username, Role.USER);
             }
         };
-        context = new ServerContext(
-                new InMemorySessionManager(),
-                testAuthenticator,
-                null
-        );
+        context = new ServerContext();
+        context.setAuthenticator(testAuthenticator);
+        context.setSessionManager(new InMemorySessionManager());
+
 
         context.addHandler("/test", new Handler() {
             @Override
             public void doPost(HttpRequest request, HttpResponse response) {
-                response.send(HttpHeaders.empty(), "doPost".getBytes());
+                response.send(MimeType.text, "doPost".getBytes());
             }
 
             @Override
             public void doGet(HttpRequest request, HttpResponse response) {
-                response.send(HttpHeaders.empty(), "doGet".getBytes());
+                response.send(MimeType.text, "doGet".getBytes());
             }
         });
 
         context.addHandler("/", new Handler() {
             @Override
             public void doGet(HttpRequest request, HttpResponse response) {
-                response.send(HttpHeaders.empty(), "default".getBytes());
+                response.send(MimeType.text, "default".getBytes());
             }
         });
     }
@@ -109,7 +108,7 @@ class ServerContextTest {
     @Test
     void testUnregisteredPathRequest() {
         //given
-        ServerContext emptyHandlerServerContext = new ServerContext(null, null, null);
+        ServerContext emptyHandlerServerContext = new ServerContext();
         HttpRequest request = get("/create-user");
         HttpResponse response = new HttpResponse(request);
 
@@ -138,7 +137,7 @@ class ServerContextTest {
     @Test
     void testExceptionReturn500() {
         //given
-        ServerContext errorContext = new ServerContext(null, null, null);
+        ServerContext errorContext = new ServerContext();
         errorContext.addHandler("/error", new Handler() {
             @Override
             public void doGet(HttpRequest request, HttpResponse response) {

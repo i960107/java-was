@@ -19,7 +19,6 @@ class RequestParamModelMapperTest {
         private int age;
         private List<String> interests;
 
-        // Getters and Setters
         public String getName() {
             return name;
         }

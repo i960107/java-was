@@ -5,9 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static util.TestUtil.assertRedirectResponse;
 import static util.TestUtil.get;
 import static util.TestUtil.post;
+import static util.TestUtil.setUpDbAndGetConnectionPool;
 
-import codesquad.application.db.InMemoryUserRepository;
+import codesquad.application.db.JdbcTemplate;
+import codesquad.application.db.UserDao;
 import codesquad.application.model.User;
+import codesquad.was.dbcp.ConnectionPool;
 import codesquad.was.http.HttpCookie;
 import codesquad.was.http.HttpHeaders;
 import codesquad.was.http.HttpRequest;
@@ -34,7 +37,7 @@ class UserLogoutTest {
 
     private static SessionManager sessionManager;
 
-    private static InMemoryUserRepository userRepository;
+    private static UserDao userDao;
 
     private String username;
     private String password;
@@ -42,26 +45,31 @@ class UserLogoutTest {
 
     @BeforeAll
     static void beforeAll() {
-        path = "/logout";
+
+        serverContext = new ServerContext();
+
         sessionManager = new InMemorySessionManager();
-        userRepository = new InMemoryUserRepository();
-        ServerContext context = new ServerContext(
-                sessionManager,
-                new DefaultAuthenticator(userRepository),
-                null
-                );
-        serverContext = context;
+        serverContext.setSessionManager(sessionManager);
+
+        ConnectionPool connectionPool = setUpDbAndGetConnectionPool();
+        serverContext.setConnectionPool(connectionPool);
+
+        path = "/logout";
         handler = new UserLogoutHandler();
-        context.addHandler(path, handler);
+        serverContext.addHandler(path, handler);
+
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(serverContext.getConnectionPool());
+        userDao = new UserDao(jdbcTemplate);
+        serverContext.setAuthenticator(new DefaultAuthenticator(userDao));
     }
 
     @BeforeEach
     void setUp() {
-        userRepository.deleteAll();
+        userDao.deleteAll();
         username = "박재성";
         password = "123456";
         User user = new User(username, "nickname", password);
-        userRepository.save(user);
+        userDao.save(user);
 
         Map<String, List<String>> parameters = new HashMap<>();
         parameters.put("username", List.of(username));
