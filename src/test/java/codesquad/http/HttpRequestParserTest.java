@@ -10,9 +10,12 @@ import codesquad.was.http.HttpMethod;
 import codesquad.was.http.HttpRequestParser;
 import codesquad.was.http.HttpCookie;
 import codesquad.was.http.HttpRequest;
+import codesquad.was.http.MimeType;
+import codesquad.was.http.Part;
 import codesquad.was.http.exception.HttpProtocolException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +34,7 @@ class HttpRequestParserTest {
         InputStream input = getClass().getClassLoader().getResourceAsStream("user-create-request.txt");
 
         //when
-        HttpRequest request = new HttpRequest();
+        HttpRequest request = new HttpRequest(null);
         HttpRequestParser.parse(request, input);
 
         //then
@@ -57,7 +60,7 @@ class HttpRequestParserTest {
         InputStream input = getClass().getClassLoader().getResourceAsStream("search-querystring-multivalue.txt");
 
         //when
-        HttpRequest request = new HttpRequest();
+        HttpRequest request = new HttpRequest(null);
         HttpRequestParser.parse(request, input);
 
         //then
@@ -101,7 +104,7 @@ class HttpRequestParserTest {
         InputStream input = getClass().getClassLoader().getResourceAsStream("user-create-form-data.txt");
 
         //when
-        HttpRequest request = new HttpRequest();
+        HttpRequest request = new HttpRequest(null);
         HttpRequestParser.parse(request, input);
 
         //then
@@ -119,6 +122,49 @@ class HttpRequestParserTest {
         assertRequestParameter(request, expectedParameters);
     }
 
+    @DisplayName("- POST multipart form data")
+    @Test
+    void testParseRequestPOSTMultipartFormData() throws IOException {
+        //given
+        InputStream input = getClass().getClassLoader().getResourceAsStream("multipart-form-data.txt");
+        HttpRequest request = new HttpRequest(null);
+
+        //when
+        HttpRequestParser.parse(request, input);
+
+        //then
+        assertRequestLine(request, "HTTP/1.1", "/upload", HttpMethod.POST);
+
+        assertEquals(3, request.getHeaders().size());
+        assertHeader(request, HttpHeaders.CONTENT_TYPE_HEADER,
+                "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW");
+        assertHeader(request, HttpHeaders.HOST_HEADER, "example.com");
+        assertHeader(request, HttpHeaders.CONTENT_LENGTH_HEADER, "346");
+
+        assertThat(request.getParts())
+                .hasSize(2);
+
+        Part file = new Part(
+                "profile_picture",
+                MimeType.jpg,
+                "profile.jpg",
+                "binary content of profile.jpg".getBytes());
+        Part usernamePart = new Part(
+                "username",
+                MimeType.text,
+                null,
+                "john_doe".getBytes()
+        );
+        assertEquals(usernamePart.getName(), request.getParts().get(0).getName());
+        assertEquals(usernamePart.getContentType(), request.getParts().get(0).getContentType());
+        assertEquals(usernamePart.getFileName(), request.getParts().get(0).getFileName());
+        assertTrue(Arrays.equals(usernamePart.getContent(), request.getParts().get(0).getContent()));
+        assertEquals(file.getName(), request.getParts().get(1).getName());
+        assertEquals(file.getContentType(), request.getParts().get(1).getContentType());
+        assertEquals(file.getFileName(), request.getParts().get(1).getFileName());
+        assertTrue(Arrays.equals(file.getContent(), request.getParts().get(1).getContent()));
+    }
+
     @DisplayName("- cookies")
     @Test
     void testParseCookies() throws IOException {
@@ -126,7 +172,7 @@ class HttpRequestParserTest {
         InputStream input = getClass().getClassLoader().getResourceAsStream("request-with-cookie.txt");
 
         //when
-        HttpRequest request = new HttpRequest();
+        HttpRequest request = new HttpRequest(null);
         HttpRequestParser.parse(request, input);
 
         //then
@@ -150,7 +196,7 @@ class HttpRequestParserTest {
     @DisplayName("http 프로토콜을 지키지 않은 경우 예외를 던진다. : {0}")
     void testThrowsExceptionWhenParseInvalidRequest(String fileName) {
         InputStream input = getClass().getClassLoader().getResourceAsStream(fileName);
-        HttpRequest request = new HttpRequest();
+        HttpRequest request = new HttpRequest(null);
         assertThrows(HttpProtocolException.class, () -> HttpRequestParser.parse(request, input));
     }
 }
