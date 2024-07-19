@@ -1,8 +1,9 @@
 package codesquad.was.http;
 
 import java.util.Arrays;
+import java.util.Locale;
 
-public enum MimeTypes {
+public enum MimeType {
 
     aac("audio/aac"),
     abw("application/x-abiword"),
@@ -18,28 +19,30 @@ public enum MimeTypes {
     js("application/javascript"),
     png("image/png"),
     jpg("image/jpeg"),
+    jpeg("image/jpeg"),
     json("application/json"),
-    form_data("application/x-www-form-urlencoded");
+    form_data("application/x-www-form-urlencoded"),
+    multipart_fom_data("multipart/form-data");
 
 
     private String MIMEType;
 
-    MimeTypes(String MIMEType) {
+    MimeType(String MIMEType) {
         this.MIMEType = MIMEType;
     }
 
-    public static MimeTypes getMimeTypeFromExtension(String fileName) {
+    public static MimeType getMimeTypeFromExtension(String fileName) {
         int index = fileName.indexOf(".");
         if (index == -1 || index + 1 >= fileName.length()) {
             throw new IllegalArgumentException();
         }
         String extension = fileName.substring(index + 1);
-        return valueOf(extension);
+        return valueOf(extension.toLowerCase(Locale.ROOT));
     }
 
-    public static MimeTypes getMimeTypeFromContentType(String contentType) {
-        return Arrays.stream(MimeTypes.values())
-                .filter(mime -> mime.getMIMEType().equals(contentType))
+    public static MimeType getMimeTypeFromContentType(String contentType) {
+        return Arrays.stream(MimeType.values())
+                .filter(mime -> contentType.contains(mime.getMIMEType()))
                 .findFirst()
                 .orElseThrow(IllegalArgumentException::new);
     }
