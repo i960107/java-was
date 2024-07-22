@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class InMemorySessionManager implements SessionManager{
+public class InMemorySessionManager implements SessionManager {
 
     private ConcurrentHashMap<String, Session> sessions;
 
@@ -28,5 +28,12 @@ public class InMemorySessionManager implements SessionManager{
         Session session = new Session(UUID.randomUUID().toString(), LocalDateTime.now());
         sessions.put(session.getId(), session);
         return session;
+    }
+
+    @Override
+    public void changeSessionId(Session session, String changeId) {
+        this.sessions.remove(session.getId());
+        session.setId(changeId);
+        this.sessions.put(changeId, session);
     }
 }

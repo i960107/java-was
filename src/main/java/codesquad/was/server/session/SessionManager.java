@@ -8,4 +8,6 @@ public interface SessionManager {
     void removeSession(String sessionId);
 
     Session createSession();
+
+    void changeSessionId(Session session, String changeId);
 }

@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Session {
-    private final String id;
+    private String id;
     private final Map<String, Object> attributes;
     private final LocalDateTime createdAt;
 
@@ -39,5 +39,9 @@ public class Session {
 
     public void setAttribute(String key, Object value) {
         this.attributes.put(key, value);
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }
