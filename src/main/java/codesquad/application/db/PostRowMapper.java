@@ -11,8 +11,8 @@ public class PostRowMapper implements RowMapper<Post> {
                 resultSet.getLong("id"),
                 resultSet.getLong("user_id"),
                 resultSet.getString("title"),
-                resultSet.getString("filename"),
                 resultSet.getString("content"),
+                resultSet.getString("filename"),
                 resultSet.getTimestamp("created_at").toLocalDateTime()
         );
     }
