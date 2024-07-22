@@ -67,11 +67,12 @@ public class Part {
 
     private static void parseContentType(Part part, Optional<String> contentType) {
         if (contentType.isPresent()) {
-            part.contentType = MimeType.getMimeTypeFromContentType(contentType.get());
+            MimeType type = MimeType.getMimeTypeFromContentType(contentType.get());
+            part.contentType = type;
             return;
         }
 
-        if (part.fileName != null) {
+        if (part.fileName != null && !part.fileName.isBlank()) {
             part.contentType = MimeType.getMimeTypeFromExtension(part.fileName);
             return;
         }
@@ -99,17 +100,14 @@ public class Part {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("Part{");
-        if (fileName != null) {
+        sb.append("name='").append(name).append('\'');
+        sb.append(", contentType=").append(contentType);
+        if (fileName != null && content != null) {
             sb.append("fileName='").append(fileName).append('\'');
             sb.append(", content size='").append(content.length).append('\'');
         }
-        sb.append(", contentType=").append(contentType);
-        sb.append(", name='").append(name).append('\'');
-        if (fileName != null) {
-            sb.append("fileName='").append(fileName).append('\'');
-            sb.append(", content size='").append(content.length).append('\'');
-        } else {
-            sb.append("='").append(new String(content)).append('\'');
+        if (content != null) {
+            sb.append(", content ='").append(new String(content)).append('\'');
         }
         sb.append('}');
         return sb.toString();

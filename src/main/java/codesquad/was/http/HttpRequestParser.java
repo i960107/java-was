@@ -1,15 +1,15 @@
 package codesquad.was.http;
 
-import static codesquad.was.util.ByteArrayUtil.copy;
-import static codesquad.was.util.ByteArrayUtil.indexOf;
+import static codesquad.was.util.IOUtil.CR;
+import static codesquad.was.util.IOUtil.LF;
+import static codesquad.was.util.IOUtil.endWithCRLF;
 import static codesquad.was.util.IOUtil.readLine;
 import static codesquad.was.util.IOUtil.readToSize;
 
 import codesquad.was.http.exception.HeaderSyntaxException;
 import codesquad.was.http.exception.HttpProtocolException;
 import codesquad.was.http.exception.NotSupportedHttpMethodException;
-import codesquad.was.util.IOUtil;
-import java.io.ByteArrayInputStream;
+import codesquad.was.util.ByteArrayUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // 메서드 호출 순서에 따라서 파싱 결과 달라짐 주의!
 public final class HttpRequestParser {
@@ -33,6 +35,8 @@ public final class HttpRequestParser {
     private static final String COOKIES_DELIMITER = ";";
 
     private static final String COOKIE_KEY_VALUE_DELIMITER = "=";
+
+    private static final Logger log = LoggerFactory.getLogger(HttpRequestParser.class);
 
     public static void parse(HttpRequest request, InputStream input) throws IOException {
         //--- request line
@@ -72,7 +76,7 @@ public final class HttpRequestParser {
             Map<String, List<String>> parameters = parseRequestParameters(formData);
             request.addParameters(parameters);
         } else if (isMultiPartData(request.getContentType())) {
-            List<Part> parts = parseMultiPart(getBoundary(headers), input);
+            List<Part> parts = parseMultiPart(getBoundary(headers), input, contentLength);
             request.setParts(parts);
         } else {
             byte[] body = parseBody(input, contentLength);
@@ -254,70 +258,77 @@ public final class HttpRequestParser {
         }
     }
 
-    private static byte[] getBoundary(HttpHeaders headers) {
+    private static String getBoundary(HttpHeaders headers) {
         return headers.getHeaderSingleValue(HttpHeaders.CONTENT_TYPE_HEADER)
-                .map(value -> value.substring(value.indexOf("boundary=") + 9).getBytes())
+                .map(value -> value.substring(value.indexOf("boundary=") + 9))
                 .orElseThrow(() -> new HttpProtocolException("boundary not found"));
     }
 
-    private static List<Part> parseMultiPart(byte[] boundary, InputStream input) {
+    private static List<Part> parseMultiPart(String boundary, InputStream input, int contentLength) {
+
+        byte[] boundaryBytes = ("--" + boundary + CR + LF).getBytes();
+        byte[] endBoundaryBytes = ("--" + boundary + "--" + CR + LF).getBytes();
+
+        List<Part> parts = new ArrayList<>();
+
         try {
-            byte[] body = input.readAllBytes();
-
-            int start = 0;
-            List<Part> parts = new ArrayList<>();
-            byte[] realBoundary = getRealBoundary(boundary);
-            while (start + realBoundary.length + 4 < body.length) {
-                int boundaryStartIndex = indexOf(body, realBoundary, start);
-                int nextBoundaryStartIndex = indexOf(body, realBoundary, boundaryStartIndex + realBoundary.length);
-                if (boundaryStartIndex == -1 || nextBoundaryStartIndex == -1) {
-                    throw new HttpProtocolException("incomplete part read");
-                }
-                try (ByteArrayInputStream partStream = new ByteArrayInputStream(
-                        body,
-                        boundaryStartIndex + realBoundary.length + 2,
-                        nextBoundaryStartIndex - boundaryStartIndex - realBoundary.length - 2)) {
-                    Part part = parsePart(partStream);
-                    parts.add(part);
-                }
-                start = nextBoundaryStartIndex;
+            byte[] inputBytes = input.readNBytes(contentLength);
+            int start = ByteArrayUtil.indexOf(inputBytes, boundaryBytes, 0);
+            if (start != 0) {
+                throw new HttpProtocolException("start boundary not found");
             }
-            String last = new String(copy(body, start, realBoundary.length + 4));
-            if (!last.equals(getEndBoundary(boundary))) {
-                throw new HttpProtocolException("invalid multipart end");
+            int nxt = 0;
+            // inputBytes[start:nxt]까지 현재 파트에 해당
+            while (true) {
+                nxt = ByteArrayUtil.indexOf(inputBytes, boundaryBytes, start + boundaryBytes.length);
+
+                if (nxt == -1) {
+                    nxt = ByteArrayUtil.indexOf(inputBytes, endBoundaryBytes, start + boundaryBytes.length);
+                }
+                if (nxt == -1) {
+                    break;
+                }
+                //part
+                byte[] partBytes = Arrays.copyOfRange(inputBytes, start + boundaryBytes.length, nxt);
+
+                //part - header(headerline 뒤 공백까지 읽음)
+                HttpHeaders headers = new HttpHeaders();
+                int lineStart = 0;
+                for (int i = 0; i < partBytes.length; i++) {
+                    if (i < partBytes.length - 1 && partBytes[i] == CR && partBytes[i + 1] == LF) {
+                        byte[] line = Arrays.copyOfRange(partBytes, lineStart, i);
+                        if (line.length == 0) {
+                            lineStart = i + 2;
+                            break;
+                        }
+                        HttpHeader httpHeader = parseHeader(new String(line));
+                        headers.setHeader(httpHeader);
+                        lineStart = i + 2;
+                        i++;
+                    }
+                }
+
+                //part - body
+                if (!endWithCRLF(partBytes)) {
+                    throw new HttpProtocolException("part should end with crlf");
+                }
+                byte[] content = Arrays.copyOfRange(partBytes, lineStart, partBytes.length - 2);
+                parts.add(Part.from(headers, content));
+
+                //다음 part부터 시작
+                start = nxt;
             }
 
+            if (!Arrays.equals(
+                    inputBytes, start, start + endBoundaryBytes.length,
+                    endBoundaryBytes, 0, endBoundaryBytes.length)) {
+                throw new IllegalArgumentException("unable to find end boundary");
+            }
             return parts;
         } catch (Exception e) {
-            throw new HttpProtocolException("fail part read");
+            log.warn("fail to read parts : {}", e.getMessage());
+            throw new HttpProtocolException("fail to parse parts of multipart request");
         }
-    }
-
-    private static Part parsePart(InputStream part) throws IOException {
-        HttpHeaders partHeader = parseHeaders(part);
-        byte[] partBody = parseBody(part, part.available() - 2);
-        if (!Arrays.equals(part.readAllBytes(), IOUtil.CRLF)) {
-            throw new HttpProtocolException("invalid part body");
-        }
-        return Part.from(partHeader, partBody);
-    }
-
-    private static byte[] getRealBoundary(byte[] boundary) {
-        byte[] prefixBytes = "--".getBytes();
-        byte[] realBoundary = new byte[prefixBytes.length + boundary.length];
-        System.arraycopy(prefixBytes, 0, realBoundary, 0, prefixBytes.length);
-        System.arraycopy(boundary, 0, realBoundary, prefixBytes.length, boundary.length);
-        return realBoundary;
-    }
-
-    private static String getEndBoundary(byte[] boundary) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("--");
-        sb.append(new String(boundary));
-        sb.append("--");
-        sb.append(new String(IOUtil.CRLF));
-        return sb.toString();
-
     }
 
 }
