@@ -1,17 +1,10 @@
-package codesquad.http;
+package codesquad.was.http;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import codesquad.was.http.HttpHeaders;
-import codesquad.was.http.HttpMethod;
-import codesquad.was.http.HttpRequestParser;
-import codesquad.was.http.HttpCookie;
-import codesquad.was.http.HttpRequest;
-import codesquad.was.http.MimeType;
-import codesquad.was.http.Part;
 import codesquad.was.http.exception.HttpProtocolException;
 import java.io.IOException;
 import java.io.InputStream;

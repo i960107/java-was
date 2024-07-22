@@ -1,4 +1,4 @@
-package codesquad.server;
+package codesquad.was.server;
 
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -10,8 +10,6 @@ import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
 import codesquad.was.http.HttpStatus;
 import codesquad.was.http.MimeType;
-import codesquad.was.server.Handler;
-import codesquad.was.server.ServerContext;
 import codesquad.was.server.authenticator.Authenticator;
 import codesquad.was.server.authenticator.Principal;
 import codesquad.was.server.authenticator.Role;

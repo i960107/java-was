@@ -1,11 +1,10 @@
-package codesquad.server;
+package codesquad.application.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import codesquad.application.handler.exception.ModelMappingException;
-import codesquad.application.util.RequestParamModelMapper;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
