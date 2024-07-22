@@ -125,19 +125,18 @@ public final class JIoEndpoint implements Endpoint<Socket, SocketProcessor> {
 
         @Override
         public void run() {
-            //todo queue에서 가져오도록 고치기
-            HttpProcessor processor = processorSupplier.get();
+            HttpProcessor processor = getProcessor();
             try {
                 log.info("process socket {}", socket.toString());
+                socket.setSoTimeout(10000);
                 processor.process(socket);
-                socket.setSoTimeout(3000);
             } catch (IOException e) {
-                log.warn("exception while processing: {} socket{}", e.getMessage(), socket.toString());
+                log.warn("exception while processing: {} socket{}", e.getMessage(), socket);
             } finally {
                 recycleProcessor(processor);
                 try {
                     socket.close();
-                    log.info("socket closed {}", socket.toString());
+                    log.info("socket closed {}", socket);
                 } catch (IOException e) {
                     log.warn("exception closing socket", e);
                 }

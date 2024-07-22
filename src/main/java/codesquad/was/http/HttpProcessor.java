@@ -25,12 +25,13 @@ public class HttpProcessor {
                 BufferedInputStream inputStream = new BufferedInputStream(socket.getInputStream());
                 BufferedOutputStream outputStream = new BufferedOutputStream(socket.getOutputStream());
         ) {
-            HttpRequest request;
+            HttpRequest request = null;
 
             try {
-                request = processRequest(inputStream);
+                request = new HttpRequest(context);
+                processRequest(inputStream, request);
             } catch (HttpProtocolException e) {
-                log.warn("error parsing http request : {}, {} ", e.getClass());
+                log.warn("error parsing http request : {} ", request);
                 writeErrorResponse(outputStream);
                 return;
             }
@@ -39,13 +40,13 @@ public class HttpProcessor {
             processResponse(request, response);
             HttpResponseWriter.write(outputStream, response);
             log.info(response.toString());
+
         } catch (IOException e) {
             log.warn("io exception occurred while processing request : {}{}", e.getClass(), e.getMessage());
         }
     }
 
-    public HttpRequest processRequest(InputStream input) throws IOException {
-        HttpRequest request = new HttpRequest(context);
+    public HttpRequest processRequest(InputStream input, HttpRequest request) throws IOException {
         HttpRequestParser.parse(request, input);
 
         log.info(request.toString());

@@ -11,7 +11,7 @@ public final class HttpResponseWriter {
         String statusLine = String.join(" ",
                 protocol,
                 status.getCode(),
-                status.name()
+                status.getMessage()
         );
 
         writeLine(out, statusLine);
