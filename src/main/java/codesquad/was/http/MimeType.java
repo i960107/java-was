@@ -32,7 +32,7 @@ public enum MimeType {
     }
 
     public static MimeType getMimeTypeFromExtension(String fileName) {
-        int index = fileName.indexOf(".");
+        int index = fileName.lastIndexOf(".");
         if (index == -1 || index + 1 >= fileName.length()) {
             throw new IllegalArgumentException();
         }
