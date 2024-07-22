@@ -7,6 +7,7 @@ import codesquad.application.util.RequestPartModelMapper;
 import codesquad.application.view.PostWriteViewRenderer;
 import codesquad.was.http.HttpRequest;
 import codesquad.was.http.HttpResponse;
+import codesquad.was.http.HttpStatus;
 import codesquad.was.http.MimeType;
 import codesquad.was.http.Part;
 import codesquad.was.server.Handler;
@@ -21,7 +22,7 @@ import org.slf4j.LoggerFactory;
 
 public class PostWriteHandler extends Handler {
 
-    private static final String UPLOAD_DIR = "/upload";
+    public static final String UPLOAD_DIR = "/upload";
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -69,26 +70,27 @@ public class PostWriteHandler extends Handler {
         if (!request.isAuthenticated()) {
             response.sendRedirect("/login/index.html");
             return;
-
         }
         PostWriteRequest post = RequestPartModelMapper.map(request.getParts(), PostWriteRequest.class);
 
-        String filename = post.getImage().getFileName();
-        String uniqueFileName = createUniqueFileName(filename);
-
-        if (post.getImage() != null) {
-            saveImage(post.getImage(), uniqueFileName);
+        if (post.getImage() == null || post.getImage().getContentType() == MimeType.text) {
+            response.sendError(HttpStatus.BAD_REQUEST);
         }
+
+        String filename = post.getImage().getFileName();
+        String uniqueFileName = createUniqueFileName(post.getImage().getContentType(), filename);
+
+        saveImage(post.getImage(), uniqueFileName);
         Post postSaved = postDao.save(post.toEntity(uniqueFileName));
         log.info("post saved {} ", postSaved);
         response.sendRedirect("/index.html");
     }
 
-    private String createUniqueFileName(String originalName) {
+    private String createUniqueFileName(MimeType contentType, String originalName) {
         StringBuilder saveFilename = new StringBuilder();
         saveFilename.append(UUID.randomUUID());
         saveFilename.append(".");
-        saveFilename.append(MimeType.getMimeTypeFromExtension(originalName).name());
+        saveFilename.append(contentType.name());
         return saveFilename.toString();
     }
 
