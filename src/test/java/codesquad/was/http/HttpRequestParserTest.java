@@ -93,7 +93,6 @@ class HttpRequestParserTest {
             List<String> actual = request.getParameterMap().get(key);
             assertThat(actual)
                     .containsExactlyInAnyOrderElementsOf(expectedParameters.get(key));
-
         }
     }
 

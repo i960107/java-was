@@ -14,8 +14,8 @@ import codesquad.was.http.HttpStatus;
 import codesquad.was.http.MimeType;
 import codesquad.was.http.Part;
 import codesquad.was.server.ServerContext;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.sql.Connection;
@@ -123,9 +123,17 @@ public class TestUtil {
         return pool;
     }
 
-    public static void execute(Socket client, String filename) throws IOException {
-        InputStream input = TestUtil.class.getClassLoader().getResourceAsStream(filename);
-        client.getOutputStream().write(input.readAllBytes());
+    public static String execute(Socket socket, String requestMessageFileName) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        byte[] requestMessageBytes = TestUtil.class.getClassLoader().getResourceAsStream(requestMessageFileName).readAllBytes();
+        socket.getOutputStream().write(requestMessageBytes);
+        socket.getOutputStream().flush();
+        BufferedReader bufferedReader = new BufferedReader(
+                new InputStreamReader(socket.getInputStream()));
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
+            sb.append(line);
+        }
+        return sb.toString();
     }
-
 }
