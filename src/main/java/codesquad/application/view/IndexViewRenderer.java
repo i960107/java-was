@@ -57,7 +57,7 @@ public class IndexViewRenderer extends ViewRenderer {
                 html.append(post.getTitle());
                 html.append("            </p>");
                 html.append("            <p class=\"post__article\">");
-                html.append(post.getContent());
+                html.append(replaceCRLF(post.getContent()));
                 html.append("            </p>");
                 html.append("        </div>");
             }
@@ -68,5 +68,9 @@ public class IndexViewRenderer extends ViewRenderer {
             log.warn("class cast exception occurred while rendering index view {} ", exception.getMessage());
             throw new ViewRenderException();
         }
+    }
+
+    private String replaceCRLF(String content) {
+        return content.replaceAll("\r\n", "<br>");
     }
 }
