@@ -14,11 +14,9 @@ public final class IOUtil {
 
     public static final String UTF8 = "UTF-8";
 
-    public static final byte[] CRLF = new byte[] {'\r', '\n'};
+    public static final char CR = '\r';
 
-    private static final char CR = '\r';
-
-    private static final char LF = '\n';
+    public static final char LF = '\n';
 
 
     private IOUtil() {
@@ -47,6 +45,13 @@ public final class IOUtil {
             throw new IOException("Could not read " + size + " bytes");
         }
         return buffer;
+    }
+
+    public static boolean endWithCRLF(byte[] content) {
+        if (content.length < 2) {
+            return false;
+        }
+        return content[content.length - 2] == CR && content[content.length - 1] == LF;
     }
 
     public static void writeLine(OutputStream output, String str) throws IOException {
