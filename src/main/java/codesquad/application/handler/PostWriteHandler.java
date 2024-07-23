@@ -68,7 +68,7 @@ public class PostWriteHandler extends Handler {
         request.authenticate();
 
         if (!request.isAuthenticated()) {
-            response.sendRedirect("/login/index.html");
+            response.sendError(HttpStatus.UNAUTHORIZED);
             return;
         }
         PostWriteRequest post = RequestPartModelMapper.map(request.getParts(), PostWriteRequest.class);

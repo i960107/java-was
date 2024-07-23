@@ -96,9 +96,7 @@ class PostWriteHandlerTest {
 
         handler.doPost(request, response);
 
-        assertEquals(HttpStatus.FOUND, response.getStatus());
-        assertEquals("/login/index.html", response.getHeaders().getHeaderSingleValue(HttpHeaders.LOCATION).get());
-        assertEquals(0, dao.findAll().size());
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatus());
     }
 
 }

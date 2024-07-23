@@ -253,8 +253,7 @@ class IntegrationTest {
             //given
             try (Socket socket = new Socket("localhost", port)) {
                 String response = TestUtil.execute(socket, "post-create-no-sid-cookie.txt");
-                assertThat(response).contains("HTTP/1.1 302 Found");
-                assertThat(response).contains(new HttpHeader("Location", "/login/index.html").toString());
+                assertThat(response).contains("HTTP/1.1 401 Unauthorized");
             }
         }
     }
