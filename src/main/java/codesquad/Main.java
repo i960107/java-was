@@ -1,28 +1,61 @@
 package codesquad;
 
+import codesquad.application.db.DBConfig;
+import codesquad.application.db.JdbcTemplate;
+import codesquad.application.db.PostDao;
+import codesquad.application.db.UserDao;
+import codesquad.application.handler.IndexHandler;
+import codesquad.application.handler.PostWriteHandler;
+import codesquad.application.handler.UserListHandler;
+import codesquad.application.handler.UserLoginHandler;
+import codesquad.application.handler.UserLogoutHandler;
+import codesquad.application.handler.UserRegisterHandler;
+import codesquad.was.http.HttpProtocol;
+import codesquad.was.server.DefaultHandler;
+import codesquad.was.server.ServerContext;
+import codesquad.was.server.authenticator.DefaultAuthenticator;
+import codesquad.was.server.session.InMemorySessionManager;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
 
 
 public class Main {
+
     public static void main(String[] args) throws IOException {
-        ServerSocket serverSocket = new ServerSocket(8080); // 8080 포트에서 서버를 엽니다.
-        System.out.println("Listening for connection on port 8080 ....");
+        ServerContext context = null;
+        try {
+            context = new ServerContext();
+            // 1. session manager 설정
+            context.setSessionManager(new InMemorySessionManager());
 
-        while (true) { // 무한 루프를 돌며 클라이언트의 연결을 기다립니다.
-            try (Socket clientSocket = serverSocket.accept()) { // 클라이언트 연결을 수락합니다.
-                System.out.println("Client connected");
+            // 2. connection pool 설정
+            DBConfig dbConfig = DBConfig.getDBConfig("application.properties");
+            context.setConnectionPool(dbConfig);
 
-                // HTTP 응답을 생성합니다.
-                OutputStream clientOutput = clientSocket.getOutputStream();
-                clientOutput.write("HTTP/1.1 200 OK\r\n".getBytes());
-                clientOutput.write("Content-Type: text/html\r\n".getBytes());
-                clientOutput.write("\r\n".getBytes());
-                clientOutput.write("<h1>Hello</h1>\r\n".getBytes()); // 응답 본문으로 "Hello"를 보냅니다.
-                clientOutput.flush();
+            // 3. dao 객체 생성
+            JdbcTemplate jdbcTemplate = new JdbcTemplate(context.getConnectionPool());
+            UserDao userDao = new UserDao(jdbcTemplate);
+            PostDao postDao = new PostDao(jdbcTemplate);
+
+            // 4. authenticator 설정
+            context.setAuthenticator(new DefaultAuthenticator(userDao));
+
+            // 5. handler 등록
+            context.addHandler("/create", new UserRegisterHandler(userDao));
+            context.addHandler("/login", new UserLoginHandler());
+            context.addHandler("/logout", new UserLogoutHandler());
+            context.addHandler("/user/list", new UserListHandler(userDao));
+            context.addHandler("/index.html", new IndexHandler(postDao));
+            context.addHandler("/post", new PostWriteHandler(postDao));
+            context.addHandler("/", new DefaultHandler());
+        } catch (Exception e) {
+            if (context != null) {
+                context.clear();
             }
+            System.exit(1);
         }
+
+        HttpProtocol server = null;
+        server = new HttpProtocol(context);
+        server.start();
     }
 }

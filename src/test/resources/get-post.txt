@@ -1,0 +1,5 @@
+GET /post HTTP/1.1
+Host: localhost:8080
+Cookie: SID=2cf6097e-7077-4180-8fb1-b233622eaa96
+Origin: http://localhost:8080
+

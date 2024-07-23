@@ -2,6 +2,11 @@ plugins {
     id 'java'
 }
 
+java {
+    sourceCompatibility = 17
+    targetCompatibility = 17
+}
+
 group = 'codesquad'
 version = '1.0-SNAPSHOT'
 
@@ -12,8 +17,23 @@ repositories {
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testImplementation 'org.assertj:assertj-core:3.21.0'
+
+    implementation 'ch.qos.logback:logback-classic:1.4.12'
+    implementation 'com.h2database:h2:2.3.230'
 }
 
 test {
     useJUnitPlatform()
+}
+
+jar {
+    manifest {
+        attributes('Main-Class': 'codesquad.Main')
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }

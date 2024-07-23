@@ -1,0 +1,6 @@
+POST /create HTTP/1.1
+Host: localhost:8080
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 63
+
+username=iwer&nickname=%EB%B0%95%EC%9E%AC%EC%84%B1&password=123
